@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { cameraRelativeDirection } from './movement.js';
 import './style.css';
 
 const canvas = document.querySelector('#ocean');
@@ -641,8 +642,7 @@ function updatePlayer(dt) {
   const forward = (pressed.has('w') || pressed.has('arrowup') ? 1 : 0) - (pressed.has('s') || pressed.has('arrowdown') ? 1 : 0) - stick.y;
   const side = (pressed.has('d') || pressed.has('arrowright') ? 1 : 0) - (pressed.has('a') || pressed.has('arrowleft') ? 1 : 0) + stick.x;
   const up = (pressed.has(' ') || verticalButtons.up ? 1 : 0) - (pressed.has('control') || verticalButtons.down ? 1 : 0);
-  playerDirection.set(Math.sin(yaw) * forward + Math.cos(yaw) * side, up, -Math.cos(yaw) * forward + Math.sin(yaw) * side);
-  if (playerDirection.lengthSq() > 1) playerDirection.normalize();
+  cameraRelativeDirection(camera, forward, side, up, playerDirection);
   const speed = pressed.has('shift') ? 6.4 : 3.8;
   targetVelocity.copy(playerDirection).multiplyScalar(speed);
   playerVelocity.lerp(targetVelocity, 1 - Math.exp(-dt * 4.6));
@@ -701,7 +701,7 @@ function animate(time) {
   if (!sonarReadout.hidden) {
     const dx = nearest.group.position.x - camera.position.x;
     const dz = nearest.group.position.z - camera.position.z;
-    sonarArrow.style.transform = `rotate(${Math.atan2(dx, -dz) - yaw}rad)`;
+    sonarArrow.style.transform = `rotate(${Math.atan2(dx, -dz) + yaw}rad)`;
     sonarText.textContent = `Sinal a ${Math.ceil(nearestDistance)} m`;
   }
   for (let i = 0; i < particleCount; i++) {

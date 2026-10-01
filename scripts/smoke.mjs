@@ -30,9 +30,11 @@ try {
   assert.match(await desktop.locator('#distanceLabel').innerText(), /Pulso emitido/);
   assert.match(await desktop.locator('#sonarReadout').innerText(), /Sinal a \d+ m/);
   await desktop.keyboard.down('w');
-  await desktop.waitForTimeout(4800);
-  await desktop.keyboard.up('w');
-  await desktop.waitForTimeout(250);
+  try {
+    await desktop.waitForFunction(() => Number(document.querySelector('#foundCount').textContent) >= 1, null, { timeout: 20000 });
+  } finally {
+    await desktop.keyboard.up('w');
+  }
   assert.ok(Number(await desktop.locator('#foundCount').innerText()) >= 1, 'First fish should be discoverable by swimming near it');
   assert.equal(await desktop.locator('#speciesDialog').isVisible(), true);
   assert.equal(await desktop.locator('#speciesScientific').innerText(), 'Abudefduf saxatilis');

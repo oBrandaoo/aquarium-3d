@@ -13,7 +13,7 @@ Abra `http://127.0.0.1:5173/`.
 
 ## Controles
 
-- **Computador:** W A S D para nadar, mouse para olhar, Espaço para subir, Ctrl para descer, Shift para acelerar, E para emitir um pulso direcional, L para alternar a lanterna, G para abrir o diário e F para rever a última ficha. Clique na água para capturar o mouse; mire e clique em um peixe descoberto para abrir sua ficha.
+- **Computador:** W A S D para nadar na direção da câmera (inclusive para cima ou para baixo ao olhar), mouse para olhar, Espaço para subir, Ctrl para descer, Shift para acelerar, E para emitir um pulso direcional, L para alternar a lanterna, G para abrir o diário e F para rever a última ficha. Clique na água para capturar o mouse; mire e clique em um peixe descoberto para abrir sua ficha.
 - **Celular:** controle à esquerda para nadar, arraste a metade direita para olhar, setas para subir e descer, botão ✦ para a lanterna e ◎ para o sonar. Toque em um peixe descoberto para abrir sua ficha.
 
 Um peixe é registrado no diário quando você se aproxima dele. Sua ficha mostra nome científico, ocorrência no Brasil, habitat, marcas para identificação e um link para a fonte. O diário mantém as fichas acessíveis durante toda a exploração. O sonar indica a direção e distância do peixe ainda não encontrado mais próximo. A cena inclui redoma translúcida, vegetação animada, corais, partículas e iluminação noturna. O botão `?` abre as instruções durante a exploração.
@@ -22,6 +22,7 @@ Um peixe é registrado no diário quando você se aproxima dele. Sua ficha mostr
 
 ```bash
 npm run build
+npm run test:movement
 npm run test:smoke
 ```
 
