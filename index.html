@@ -15,7 +15,10 @@
       <header class="topbar">
         <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>Aquário<br><em>Noturno</em></span></div>
         <div class="top-note">Peixes da costa brasileira</div>
-        <button class="sound-button" id="helpButton" type="button" aria-label="Abrir instruções">?</button>
+        <div class="top-actions">
+          <button class="journal-button" id="journalButton" type="button" hidden>Diário <span id="journalCount">0 / 5</span></button>
+          <button class="sound-button" id="helpButton" type="button" aria-label="Abrir instruções">?</button>
+        </div>
       </header>
 
       <main>
@@ -36,9 +39,12 @@
           <div class="hud-bottom"><span id="distanceLabel">Explore a água</span><span class="hud-wave" aria-hidden="true">〰</span></div>
         </aside>
 
+        <div class="sonar-readout" id="sonarReadout" role="status" aria-live="polite" hidden><span id="sonarArrow" aria-hidden="true">↑</span><span id="sonarText"></span></div>
+
         <div class="crosshair" id="crosshair" aria-hidden="true" hidden><i></i><i></i><i></i><i></i></div>
         <dialog class="species-dialog" id="speciesDialog" aria-labelledby="speciesName">
           <button class="dialog-close" id="closeSpecies" aria-label="Fechar ficha" type="button">×</button>
+          <button class="species-back" id="backToJournal" type="button" hidden>← Voltar ao diário</button>
           <span class="discovery-kicker" id="speciesKicker">Ficha de campo</span>
           <h2 id="speciesName"></h2>
           <p class="scientific-name" id="speciesScientific"></p>
@@ -50,23 +56,32 @@
           <a id="speciesSource" href="#" target="_blank" rel="noopener noreferrer">Consultar fonte da espécie ↗</a>
         </dialog>
 
+        <dialog class="journal-dialog" id="journalDialog" aria-labelledby="journalTitle">
+          <button class="dialog-close" id="closeJournal" aria-label="Fechar diário" type="button">×</button>
+          <span class="discovery-kicker">Coleção da expedição</span>
+          <h2 id="journalTitle">Diário de bordo</h2>
+          <p>Volte às fichas dos peixes que você já encontrou.</p>
+          <div id="journalEntries" class="journal-entries"></div>
+          <button class="dialog-action" id="resumeJournal" type="button">Voltar à água</button>
+        </dialog>
+
         <div class="play-footer" id="playFooter" hidden>
-          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span> &nbsp; F <span>última ficha</span></div>
-          <button class="pulse-button" id="pulseButton" type="button"><span class="pulse-icon" aria-hidden="true"></span> Emitir pulso <kbd>E</kbd></button>
+          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span> &nbsp; G <span>diário</span></div>
+          <div class="footer-actions"><button class="pulse-button" id="lanternButton" type="button" aria-pressed="false">✦ Lanterna <kbd>L</kbd></button><button class="pulse-button" id="pulseButton" type="button"><span class="pulse-icon" aria-hidden="true"></span> Emitir pulso <kbd>E</kbd></button></div>
         </div>
 
         <div class="mobile-controls" id="mobileControls" hidden>
           <div class="joystick" id="joystick" aria-label="Controle de movimento"><div class="joystick-knob" id="joystickKnob"></div></div>
-          <div class="mobile-actions"><button id="upButton" aria-label="Subir" type="button">↑</button><button id="downButton" aria-label="Descer" type="button">↓</button><button id="mobilePulse" aria-label="Emitir pulso" type="button">◎</button></div>
+          <div class="mobile-actions"><button id="upButton" aria-label="Subir" type="button">↑</button><button id="downButton" aria-label="Descer" type="button">↓</button><button id="mobileLantern" aria-label="Ligar lanterna" aria-pressed="false" type="button">✦</button><button id="mobilePulse" aria-label="Emitir pulso" type="button">◎</button></div>
         </div>
 
         <dialog class="help-dialog" id="helpDialog" aria-labelledby="helpTitle">
           <button class="dialog-close" id="closeHelp" aria-label="Fechar instruções" type="button">×</button>
           <span class="discovery-kicker">Guia da expedição</span>
           <h2 id="helpTitle">Siga as luzes.</h2>
-          <p>Encontre cinco espécies marinhas do Brasil. Ao chegar perto de um peixe, ele entra no diário; toque no nome para ler sua ficha.</p>
-          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço para subir, Ctrl para descer, E para emitir um pulso e F para rever a última ficha. Clique na água para capturar o mouse.</p>
-          <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita da tela para olhar e use as setas para mudar de altura.</p>
+          <p>Explore a redoma e encontre cinco espécies marinhas do Brasil. Depois, abra qualquer ficha pelo diário ou selecione o peixe na água.</p>
+          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço e Ctrl para mudar de altura, E para usar o sonar, L para ligar a lanterna e G para abrir o diário. Clique na água para capturar o mouse.</p>
+          <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita para olhar e toque nos botões para mudar de altura, acender a lanterna e emitir um pulso.</p>
           <button class="dialog-action" id="resumeButton" type="button">Voltar à água</button>
         </dialog>
 

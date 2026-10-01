@@ -9,6 +9,12 @@ const list = document.querySelector('#fishList');
 const foundCount = document.querySelector('#foundCount');
 const distanceLabel = document.querySelector('#distanceLabel');
 const speciesDialog = document.querySelector('#speciesDialog');
+const journalDialog = document.querySelector('#journalDialog');
+const journalButton = document.querySelector('#journalButton');
+const journalEntries = document.querySelector('#journalEntries');
+const sonarReadout = document.querySelector('#sonarReadout');
+const sonarArrow = document.querySelector('#sonarArrow');
+const sonarText = document.querySelector('#sonarText');
 const helpDialog = document.querySelector('#helpDialog');
 const mobileControls = document.querySelector('#mobileControls');
 const playFooter = document.querySelector('#playFooter');
@@ -62,6 +68,57 @@ scene.add(moon);
 const upperGlow = new THREE.PointLight('#5dcbdf', 82, 27, 2);
 upperGlow.position.set(2, 6, -3);
 scene.add(upperGlow);
+scene.add(camera);
+const lantern = new THREE.SpotLight('#c7f7ee', 0, 20, .47, .65, 1.5);
+lantern.position.set(0, -.12, 0);
+lantern.target.position.set(0, -.12, -4);
+camera.add(lantern, lantern.target);
+let lanternOn = false;
+
+const domeRadius = 15.8;
+const domeBase = -2.65;
+const domeHeightScale = .78;
+const dome = new THREE.Mesh(
+  new THREE.SphereGeometry(domeRadius, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2),
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide, transparent: true, depthWrite: false,
+    uniforms: { glassColor: { value: new THREE.Color('#60b7c6') } },
+    vertexShader: 'varying vec3 vNormal; varying vec3 vEye; void main(){ vec4 world = modelMatrix * vec4(position,1.0); vNormal = normalize(mat3(modelMatrix) * normal); vEye = normalize(cameraPosition - world.xyz); gl_Position = projectionMatrix * viewMatrix * world; }',
+    fragmentShader: 'uniform vec3 glassColor; varying vec3 vNormal; varying vec3 vEye; void main(){ float edge = pow(1.0 - abs(dot(normalize(vNormal), normalize(vEye))), 2.0); gl_FragColor = vec4(glassColor, 0.035 + edge * 0.22); }',
+  }),
+);
+dome.position.y = domeBase;
+dome.scale.y = domeHeightScale;
+dome.renderOrder = 4;
+scene.add(dome);
+const glassLine = new THREE.LineBasicMaterial({ color: '#70c3cb', transparent: true, opacity: .19, depthWrite: false });
+function domeCurve(points) {
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), glassLine);
+  line.renderOrder = 5;
+  scene.add(line);
+}
+for (const angle of [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4]) {
+  for (const side of [0, Math.PI]) {
+    const points = [];
+    for (let i = 0; i <= 48; i++) {
+      const t = i / 48 * Math.PI / 2;
+      points.push(new THREE.Vector3(Math.cos(angle + side) * Math.sin(t) * domeRadius, domeBase + Math.cos(t) * domeRadius * domeHeightScale, Math.sin(angle + side) * Math.sin(t) * domeRadius));
+    }
+    domeCurve(points);
+  }
+}
+for (const t of [Math.PI / 5, Math.PI * 2 / 5]) {
+  const points = [];
+  for (let i = 0; i <= 128; i++) {
+    const angle = i / 128 * Math.PI * 2;
+    points.push(new THREE.Vector3(Math.cos(angle) * Math.sin(t) * domeRadius, domeBase + Math.cos(t) * domeRadius * domeHeightScale, Math.sin(angle) * Math.sin(t) * domeRadius));
+  }
+  domeCurve(points);
+}
+const domeRim = new THREE.Mesh(new THREE.TorusGeometry(domeRadius - .1, .07, 8, 128), mat('#74c6c6', { emissive: '#4fc6c3', emissiveIntensity: 1.4 }));
+domeRim.rotation.x = Math.PI / 2;
+domeRim.position.y = domeBase + .08;
+scene.add(domeRim);
 
 // A low, uneven seabed leaves plenty of room to swim while hiding the tank edge in fog.
 const groundGeometry = new THREE.PlaneGeometry(42, 42, 80, 80);
@@ -71,6 +128,15 @@ for (let i = 0; i < groundPositions.count; i++) {
   const x = groundPositions.getX(i), z = groundPositions.getZ(i);
   groundPositions.setY(i, -2.65 + Math.sin(x * .33) * .17 + Math.cos(z * .42) * .13 + Math.sin((x + z) * .82) * .045);
 }
+const groundIndices = groundGeometry.index.array;
+const keptTriangles = [];
+for (let i = 0; i < groundIndices.length; i += 3) {
+  const a = groundIndices[i], b = groundIndices[i + 1], c = groundIndices[i + 2];
+  const x = (groundPositions.getX(a) + groundPositions.getX(b) + groundPositions.getX(c)) / 3;
+  const z = (groundPositions.getZ(a) + groundPositions.getZ(b) + groundPositions.getZ(c)) / 3;
+  if (Math.hypot(x, z) < domeRadius - .15) keptTriangles.push(a, b, c);
+}
+groundGeometry.setIndex(keptTriangles);
 groundGeometry.computeVertexNormals();
 scene.add(new THREE.Mesh(groundGeometry, mat('#144056', { roughness: 1, side: THREE.DoubleSide })));
 
@@ -78,7 +144,8 @@ const pebbleGeo = new THREE.IcosahedronGeometry(1, 0);
 const pebbles = new THREE.InstancedMesh(pebbleGeo, mat('#477b88', { roughness: 1 }), 360);
 const pebbleDummy = new THREE.Object3D();
 for (let i = 0; i < 360; i++) {
-  const x = between(-19, 19), z = between(-19, 19);
+  const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 14.9;
+  const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius;
   pebbleDummy.position.set(x, -2.52 + Math.sin(x * .33) * .17 + Math.cos(z * .42) * .13, z);
   pebbleDummy.rotation.set(random() * 3, random() * 3, random() * 3);
   pebbleDummy.scale.set(between(.025, .12), between(.015, .055), between(.025, .11));
@@ -94,7 +161,7 @@ const rockGeo = new THREE.DodecahedronGeometry(1, 1);
 const rockMats = [mat('#1a3a4b'), mat('#224958'), mat('#1b3448'), mat('#2b5864')];
 for (let i = 0; i < 48; i++) {
   const angle = random() * Math.PI * 2;
-  const radius = between(6, 20);
+  const radius = between(6, 14.2);
   const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius;
   const rock = new THREE.Mesh(rockGeo, rockMats[i % rockMats.length]);
   rock.position.set(x, -2.2, z);
@@ -146,7 +213,7 @@ function addPlant(x, z, height, index) {
 }
 for (let i = 0; i < 62; i++) {
   const angle = random() * Math.PI * 2;
-  const radius = between(2.5, 18.5);
+  const radius = between(2.5, 14.1);
   addPlant(Math.cos(angle) * radius, Math.sin(angle) * radius, between(.8, 2.6), i);
 }
 for (const data of fishData) {
@@ -166,7 +233,7 @@ const coralMaterials = [
   mat('#668caa', { emissive: '#396c9e', emissiveIntensity: .56 }),
 ];
 for (let c = 0; c < 28; c++) {
-  const angle = random() * Math.PI * 2, radius = between(4, 18);
+  const angle = random() * Math.PI * 2, radius = between(4, 14);
   const coral = new THREE.Group();
   coral.position.set(Math.cos(angle) * radius, -2.45, Math.sin(angle) * radius);
   const material = coralMaterials[c % coralMaterials.length];
@@ -276,6 +343,7 @@ function makeBody(data) {
 function createFish(data, index) {
   const anchor = new THREE.Vector3(...data.at);
   const group = new THREE.Group();
+  group.userData.fishIndex = index;
   group.position.copy(anchor);
   group.rotation.y = data.yaw;
   group.scale.setScalar(data.size);
@@ -362,9 +430,10 @@ const particleCount = isTouch ? 170 : 300;
 const particlePositions = new Float32Array(particleCount * 3);
 const particleSpeeds = new Float32Array(particleCount);
 for (let i = 0; i < particleCount; i++) {
-  particlePositions[i * 3] = between(-19, 19);
-  particlePositions[i * 3 + 1] = between(-2, 7);
-  particlePositions[i * 3 + 2] = between(-19, 19);
+  const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 11.5;
+  particlePositions[i * 3] = Math.cos(angle) * radius;
+  particlePositions[i * 3 + 1] = between(-2, 6.8);
+  particlePositions[i * 3 + 2] = Math.sin(angle) * radius;
   particleSpeeds[i] = between(.07, .3);
 }
 const particleGeometry = new THREE.BufferGeometry();
@@ -384,15 +453,19 @@ let elapsed = 0;
 let foundTotal = 0;
 let lastFound = null;
 let nearest = null;
+let returnToJournal = false;
 const pressed = new Set();
 const stick = { x: 0, y: 0, pointer: null };
-let dragPointer = null, dragX = 0, dragY = 0;
+let dragPointer = null, dragX = 0, dragY = 0, dragStartX = 0, dragStartY = 0, dragMoved = false;
 const verticalButtons = { up: false, down: false };
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
 
 function start() {
   active = true;
   intro.classList.add('is-hidden');
   hud.hidden = false; playFooter.hidden = false; crosshair.hidden = false;
+  journalButton.hidden = false;
   if (isTouch) mobileControls.hidden = false;
   else canvas.requestPointerLock?.();
 }
@@ -402,13 +475,34 @@ function look(dx, dy) {
   camera.rotation.set(pitch, yaw, 0);
 }
 function emitPulse() {
-  if (!active) return;
+  if (!active || speciesDialog.open || journalDialog.open || helpDialog.open) return;
   pulseAge = 0;
   pulse.position.copy(camera.position);
   distanceLabel.textContent = 'Pulso emitido — siga os brilhos';
 }
-function openSpecies(item, justFound = false) {
+function toggleLantern() {
+  if (!active) return;
+  lanternOn = !lanternOn;
+  lantern.intensity = lanternOn ? 18 : 0;
+  document.querySelector('#lanternButton').setAttribute('aria-pressed', String(lanternOn));
+  document.querySelector('#mobileLantern').setAttribute('aria-pressed', String(lanternOn));
+  document.querySelector('#mobileLantern').setAttribute('aria-label', lanternOn ? 'Desligar lanterna' : 'Ligar lanterna');
+}
+function renderJournal() {
+  journalEntries.innerHTML = fish.map(item => `<button class="journal-entry ${item.found ? 'is-found' : ''}" type="button" data-fish="${item.index}" ${item.found ? '' : 'disabled'}><span class="journal-entry-mark" style="--fish-color:${item.data.color}">${item.found ? '✳' : '○'}</span><span><strong>${item.found ? item.data.name : 'Espécie por encontrar'}</strong><small>${item.found ? item.data.scientific : 'Explore a redoma para revelar'}</small></span><span class="journal-entry-arrow">${item.found ? '↗' : '—'}</span></button>`).join('');
+}
+function openJournal() {
+  if (!active || speciesDialog.open || helpDialog.open) return;
   document.exitPointerLock?.();
+  renderJournal();
+  if (!journalDialog.open) journalDialog.showModal();
+}
+function openSpecies(item, justFound = false, fromJournal = false) {
+  if (speciesDialog.open) return;
+  returnToJournal = fromJournal;
+  if (journalDialog.open) journalDialog.close();
+  document.exitPointerLock?.();
+  document.querySelector('#backToJournal').hidden = !fromJournal;
   document.querySelector('#speciesKicker').textContent = justFound ? 'Nova espécie encontrada' : 'Ficha de campo';
   document.querySelector('#speciesName').textContent = item.data.name;
   document.querySelector('#speciesScientific').textContent = item.data.scientific;
@@ -424,6 +518,7 @@ function discover(item) {
   lastFound = item;
   foundTotal++;
   foundCount.textContent = foundTotal;
+  document.querySelector('#journalCount').textContent = `${foundTotal} / ${fish.length}`;
   const row = document.querySelector(`#fish-${item.index}`);
   row.classList.add('found'); row.disabled = false;
   row.setAttribute('aria-label', `${item.data.name}: abrir ficha`);
@@ -436,42 +531,83 @@ function discover(item) {
 document.querySelector('#startButton').addEventListener('click', start);
 document.querySelector('#pulseButton').addEventListener('click', emitPulse);
 document.querySelector('#mobilePulse').addEventListener('click', emitPulse);
+document.querySelector('#lanternButton').addEventListener('click', toggleLantern);
+document.querySelector('#mobileLantern').addEventListener('click', toggleLantern);
+journalButton.addEventListener('click', openJournal);
+journalEntries.addEventListener('click', e => {
+  const entry = e.target.closest('button[data-fish]');
+  if (entry && !entry.disabled) openSpecies(fish[Number(entry.dataset.fish)], false, true);
+});
+document.querySelector('#closeJournal').addEventListener('click', () => journalDialog.close());
+document.querySelector('#resumeJournal').addEventListener('click', () => journalDialog.close());
+journalDialog.addEventListener('click', e => { if (e.target === journalDialog) journalDialog.close(); });
+journalDialog.addEventListener('close', () => { if (active && !isTouch && !speciesDialog.open) canvas.requestPointerLock?.(); });
 list.addEventListener('click', e => {
   const row = e.target.closest('button[data-fish]');
   if (row && !row.disabled) openSpecies(fish[Number(row.dataset.fish)]);
 });
-document.querySelector('#closeSpecies').addEventListener('click', () => {
-  speciesDialog.close();
-  if (active && !isTouch) canvas.requestPointerLock?.();
-});
+document.querySelector('#closeSpecies').addEventListener('click', () => speciesDialog.close());
+document.querySelector('#backToJournal').addEventListener('click', () => speciesDialog.close());
 speciesDialog.addEventListener('click', e => { if (e.target === speciesDialog) speciesDialog.close(); });
+speciesDialog.addEventListener('close', () => {
+  if (returnToJournal) { returnToJournal = false; openJournal(); }
+  else if (active && !isTouch) canvas.requestPointerLock?.();
+});
 document.querySelector('#helpButton').addEventListener('click', () => { document.exitPointerLock?.(); helpDialog.showModal(); });
 document.querySelector('#closeHelp').addEventListener('click', () => helpDialog.close());
-document.querySelector('#resumeButton').addEventListener('click', () => { helpDialog.close(); if (active && !isTouch) canvas.requestPointerLock?.(); });
+document.querySelector('#resumeButton').addEventListener('click', () => helpDialog.close());
 helpDialog.addEventListener('click', e => { if (e.target === helpDialog) helpDialog.close(); });
-canvas.addEventListener('click', () => { if (active && !isTouch && document.pointerLockElement !== canvas) canvas.requestPointerLock?.(); });
+helpDialog.addEventListener('close', () => { if (active && !isTouch) canvas.requestPointerLock?.(); });
+function selectFish(clientX, clientY) {
+  pointer.set(clientX / innerWidth * 2 - 1, -(clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(fish.map(item => item.group), true);
+  if (!hits.length) return;
+  let object = hits[0].object;
+  while (object && object.userData.fishIndex === undefined) object = object.parent;
+  if (!object) return;
+  const item = fish[object.userData.fishIndex];
+  if (item.found) openSpecies(item);
+  else distanceLabel.textContent = 'Aproxime-se deste peixe para registrá-lo';
+}
+canvas.addEventListener('click', e => {
+  if (!active || isTouch || speciesDialog.open || journalDialog.open || helpDialog.open) return;
+  if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+  else selectFish(innerWidth / 2, innerHeight / 2);
+});
 document.addEventListener('mousemove', e => { if (active && document.pointerLockElement === canvas && !helpDialog.open) look(e.movementX, e.movementY); });
 document.addEventListener('keydown', e => {
-  if (helpDialog.open || speciesDialog.open) return;
   const key = e.key.toLowerCase();
-  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e', 'f'].includes(key)) e.preventDefault();
+  if (key === 'g' && active && !e.repeat && !speciesDialog.open && !helpDialog.open) {
+    e.preventDefault();
+    if (journalDialog.open) journalDialog.close(); else openJournal();
+    return;
+  }
+  if (helpDialog.open || speciesDialog.open || journalDialog.open) return;
+  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e', 'f', 'l'].includes(key)) e.preventDefault();
   pressed.add(key);
   if (key === 'e' && !e.repeat) emitPulse();
   if (key === 'f' && !e.repeat && lastFound) openSpecies(lastFound);
+  if (key === 'l' && !e.repeat) toggleLantern();
 });
 document.addEventListener('keyup', e => pressed.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => pressed.clear());
 canvas.addEventListener('pointerdown', e => {
   if (!active || !isTouch || e.clientX < innerWidth * .42) return;
-  dragPointer = e.pointerId; dragX = e.clientX; dragY = e.clientY;
+  dragPointer = e.pointerId; dragX = dragStartX = e.clientX; dragY = dragStartY = e.clientY; dragMoved = false;
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', e => {
   if (e.pointerId !== dragPointer) return;
+  if (Math.hypot(e.clientX - dragStartX, e.clientY - dragStartY) > 10) dragMoved = true;
   look(e.clientX - dragX, e.clientY - dragY);
   dragX = e.clientX; dragY = e.clientY;
 });
-canvas.addEventListener('pointerup', e => { if (e.pointerId === dragPointer) dragPointer = null; });
+canvas.addEventListener('pointerup', e => {
+  if (e.pointerId !== dragPointer) return;
+  if (!dragMoved) selectFish(e.clientX, e.clientY);
+  dragPointer = null;
+});
 const joystick = document.querySelector('#joystick');
 const joystickKnob = document.querySelector('#joystickKnob');
 function updateStick(e) {
@@ -501,7 +637,7 @@ window.addEventListener('resize', () => {
 });
 
 function updatePlayer(dt) {
-  if (!active || helpDialog.open || speciesDialog.open) return;
+  if (!active || helpDialog.open || speciesDialog.open || journalDialog.open) return;
   const forward = (pressed.has('w') || pressed.has('arrowup') ? 1 : 0) - (pressed.has('s') || pressed.has('arrowdown') ? 1 : 0) - stick.y;
   const side = (pressed.has('d') || pressed.has('arrowright') ? 1 : 0) - (pressed.has('a') || pressed.has('arrowleft') ? 1 : 0) + stick.x;
   const up = (pressed.has(' ') || verticalButtons.up ? 1 : 0) - (pressed.has('control') || verticalButtons.down ? 1 : 0);
@@ -511,9 +647,17 @@ function updatePlayer(dt) {
   targetVelocity.copy(playerDirection).multiplyScalar(speed);
   playerVelocity.lerp(targetVelocity, 1 - Math.exp(-dt * 4.6));
   camera.position.addScaledVector(playerVelocity, dt);
-  camera.position.x = THREE.MathUtils.clamp(camera.position.x, -14.3, 14.3);
   camera.position.y = THREE.MathUtils.clamp(camera.position.y, -1.35, 6.25);
-  camera.position.z = THREE.MathUtils.clamp(camera.position.z, -14.3, 14.3);
+  const normalizedHeight = (camera.position.y - domeBase) / domeHeightScale;
+  const maxRadius = Math.sqrt(Math.max(0, domeRadius ** 2 - normalizedHeight ** 2)) - .72;
+  const radius = Math.hypot(camera.position.x, camera.position.z);
+  if (radius > maxRadius) {
+    camera.position.x *= maxRadius / radius;
+    camera.position.z *= maxRadius / radius;
+    const normal = new THREE.Vector3(camera.position.x, 0, camera.position.z).normalize();
+    const outwardSpeed = playerVelocity.dot(normal);
+    if (outwardSpeed > 0) playerVelocity.addScaledVector(normal, -outwardSpeed);
+  }
 }
 function animate(time) {
   const dt = Math.min((time - lastTime) / 1000, .1);
@@ -530,7 +674,7 @@ function animate(time) {
   for (const item of fish) {
     const distance = camera.position.distanceTo(item.group.position);
     if (!item.found && distance < nearestDistance) { nearest = item; nearestDistance = distance; }
-    if (active && distance < 2.2) discover(item);
+    if (active && !speciesDialog.open && !journalDialog.open && !helpDialog.open && distance < 2.2) discover(item);
     // Each fish remains attached to a point by a damped spring. A swimmer passing
     // nearby pushes it away gently, then it settles back into its resting place.
     const home = tmp.copy(item.anchor).sub(item.group.position);
@@ -553,11 +697,18 @@ function animate(time) {
   if (active && foundTotal !== fish.length && nearest && pulseAge > 4) {
     distanceLabel.textContent = nearestDistance < 5 ? `Uma luz está a ${Math.ceil(nearestDistance)} m` : 'Explore a água';
   }
+  sonarReadout.hidden = !active || !nearest || pulseAge > 4 || speciesDialog.open || journalDialog.open || helpDialog.open;
+  if (!sonarReadout.hidden) {
+    const dx = nearest.group.position.x - camera.position.x;
+    const dz = nearest.group.position.z - camera.position.z;
+    sonarArrow.style.transform = `rotate(${Math.atan2(dx, -dz) - yaw}rad)`;
+    sonarText.textContent = `Sinal a ${Math.ceil(nearestDistance)} m`;
+  }
   for (let i = 0; i < particleCount; i++) {
     const j = i * 3;
     particlePositions[j + 1] += particleSpeeds[i] * dt * motion;
     particlePositions[j] += Math.sin(elapsed * .7 + i) * dt * .012 * motion;
-    if (particlePositions[j + 1] > 7) particlePositions[j + 1] = -2.5;
+    if (particlePositions[j + 1] > 6.8) particlePositions[j + 1] = -2.5;
   }
   particleGeometry.attributes.position.needsUpdate = true;
   pulseAge += dt;
