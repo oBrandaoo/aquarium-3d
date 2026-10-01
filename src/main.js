@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { cameraRelativeDirection } from './movement.js';
 import { createAquariumAudio } from './ambientAudio.js';
+import { captureAquariumPhoto } from './photoCapture.js';
 import './style.css';
 
 const canvas = document.querySelector('#ocean');
@@ -14,6 +15,12 @@ const speciesDialog = document.querySelector('#speciesDialog');
 const journalDialog = document.querySelector('#journalDialog');
 const journalButton = document.querySelector('#journalButton');
 const journalEntries = document.querySelector('#journalEntries');
+const habitatEntries = document.querySelector('#habitatEntries');
+const photoEntries = document.querySelector('#photoEntries');
+const photoButton = document.querySelector('#photoButton');
+const photoDialog = document.querySelector('#photoDialog');
+const photoToast = document.querySelector('#photoToast');
+const photoFlash = document.querySelector('#photoFlash');
 const sonarReadout = document.querySelector('#sonarReadout');
 const sonarArrow = document.querySelector('#sonarArrow');
 const sonarText = document.querySelector('#sonarText');
@@ -533,6 +540,12 @@ let lastFound = null;
 let nearest = null;
 let activePoi = null;
 let returnToJournal = false;
+let returnPoiToJournal = false;
+let activeJournalTab = 'fish';
+let photoToastAge = 100;
+let photoFlashAge = 100;
+const photos = Array(fish.length).fill(null);
+const progressKey = 'aquario-noturno-progress-v1';
 const pressed = new Set();
 const stick = { x: 0, y: 0, pointer: null };
 let dragPointer = null, dragX = 0, dragY = 0, dragStartX = 0, dragStartY = 0, dragMoved = false;
@@ -544,7 +557,7 @@ function start() {
   active = true;
   intro.classList.add('is-hidden');
   hud.hidden = false; playFooter.hidden = false; crosshair.hidden = false;
-  journalButton.hidden = false; audioButton.hidden = false;
+  journalButton.hidden = false; audioButton.hidden = false; photoButton.hidden = false;
   if (isTouch) mobileControls.hidden = false;
   else canvas.requestPointerLock?.();
 }
@@ -554,7 +567,7 @@ function look(dx, dy) {
   camera.rotation.set(pitch, yaw, 0);
 }
 function emitPulse() {
-  if (!active || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open) return;
+  if (!active || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open || photoDialog.open) return;
   pulseAge = 0;
   pulse.position.copy(camera.position);
   distanceLabel.textContent = 'Pulso emitido — siga os brilhos';
@@ -574,10 +587,66 @@ function toggleAudio() {
   audioButton.setAttribute('aria-label', enabled ? 'Desativar som ambiente' : 'Ativar som ambiente');
   audioButton.title = enabled ? 'Desativar som ambiente (M)' : 'Ativar som ambiente (M)';
 }
-function openPoi(point = activePoi) {
-  if (!active || !point || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open) return;
+function updateFoundRow(item) {
+  const row = document.querySelector(`#fish-${item.index}`);
+  row.classList.add('found'); row.disabled = false;
+  row.setAttribute('aria-label', `${item.data.name}: abrir ficha`);
+  row.querySelector('small').textContent = 'ver ficha';
+}
+function updateProgressUi() {
+  foundTotal = fish.filter(item => item.found).length;
+  foundCount.textContent = foundTotal;
+  document.querySelector('#journalCount').textContent = `${foundTotal} / ${fish.length}`;
+  document.querySelector('#habitatCount').textContent = `${habitatPoints.filter(point => point.visited).length} / ${habitatPoints.length}`;
+  document.querySelector('#photoCount').textContent = `${photos.filter(Boolean).length} / ${fish.length}`;
+  if (foundTotal === fish.length && habitatPoints.every(point => point.visited) && photos.every(Boolean)) {
+    distanceLabel.textContent = 'Expedição completa — veja seu diário';
+  }
+}
+function saveProgress() {
+  try {
+    localStorage.setItem(progressKey, JSON.stringify({
+      version: 1,
+      found: fish.filter(item => item.found).map(item => item.index),
+      habitats: habitatPoints.filter(point => point.visited).map(point => point.index),
+      photos,
+    }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+function restoreProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(progressKey));
+    if (saved?.version !== 1) return;
+    for (const index of saved.found ?? []) {
+      if (fish[index]) { fish[index].found = true; updateFoundRow(fish[index]); }
+    }
+    for (const index of saved.habitats ?? []) {
+      if (habitatPoints[index]) habitatPoints[index].visited = true;
+    }
+    for (let i = 0; i < fish.length; i++) {
+      const photo = saved.photos?.[i];
+      if (photo && typeof photo.image === 'string' && photo.image.length < 1000000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(photo.image)) {
+        photos[i] = { image: photo.image, takenAt: Number(photo.takenAt) || Date.now() };
+        fish[i].found = true;
+        updateFoundRow(fish[i]);
+      }
+    }
+    lastFound = fish.filter(item => item.found).at(-1) ?? null;
+    updateProgressUi();
+  } catch {
+    // The aquarium remains usable when storage is unavailable or outdated.
+  }
+}
+function openPoi(point = activePoi, fromJournal = false) {
+  if (!active || !point || speciesDialog.open || (journalDialog.open && !fromJournal) || helpDialog.open || poiDialog.open || photoDialog.open) return;
+  returnPoiToJournal = fromJournal;
+  if (journalDialog.open) journalDialog.close();
   document.exitPointerLock?.();
-  point.visited = true;
+  if (!point.visited) { point.visited = true; updateProgressUi(); saveProgress(); }
+  document.querySelector('#poiBackToJournal').hidden = !fromJournal;
   document.querySelector('#poiKicker').textContent = point.data.kind;
   document.querySelector('#poiTitle').textContent = point.data.title;
   document.querySelector('#poiRegion').textContent = point.data.region;
@@ -587,11 +656,28 @@ function openPoi(point = activePoi) {
 }
 function renderJournal() {
   journalEntries.innerHTML = fish.map(item => `<button class="journal-entry ${item.found ? 'is-found' : ''}" type="button" data-fish="${item.index}" ${item.found ? '' : 'disabled'}><span class="journal-entry-mark" style="--fish-color:${item.data.color}">${item.found ? '✳' : '○'}</span><span><strong>${item.found ? item.data.name : 'Espécie por encontrar'}</strong><small>${item.found ? item.data.scientific : 'Explore a redoma para revelar'}</small></span><span class="journal-entry-arrow">${item.found ? '↗' : '—'}</span></button>`).join('');
+  habitatEntries.innerHTML = habitatPoints.map(point => `<button class="journal-entry ${point.visited ? 'is-found' : ''}" type="button" data-habitat="${point.index}" ${point.visited ? '' : 'disabled'}><span class="journal-entry-mark" style="--fish-color:${point.data.color}">${point.visited ? '✳' : '○'}</span><span><strong>${point.data.title}</strong><small>${point.visited ? point.data.region : 'por visitar'}</small></span><span class="journal-entry-arrow">${point.visited ? '↗' : '—'}</span></button>`).join('');
+  photoEntries.innerHTML = fish.map(item => {
+    const photo = photos[item.index];
+    return `<button class="photo-entry ${photo ? 'has-photo' : ''}" type="button" data-photo="${item.index}" ${photo ? '' : 'disabled'} aria-label="${photo ? `Ver fotografia de ${item.data.name}` : `Fotografia de ${item.data.name} por registrar`}"><span class="photo-thumb">${photo ? `<img src="${photo.image}" alt="">` : '▣'}</span><span>${item.data.short}</span></button>`;
+  }).join('');
+  document.querySelector('#journalProgress').innerHTML = `<div><strong>${foundTotal}/${fish.length}</strong><span>peixes</span></div><div><strong>${habitatPoints.filter(point => point.visited).length}/${habitatPoints.length}</strong><span>habitats</span></div><div><strong>${photos.filter(Boolean).length}/${fish.length}</strong><span>fotos</span></div>`;
+  document.querySelector('#journalCompletion').hidden = !(foundTotal === fish.length && habitatPoints.every(point => point.visited) && photos.every(Boolean));
+}
+function setJournalTab(tab) {
+  if (!['fish', 'habitats', 'photos'].includes(tab)) return;
+  activeJournalTab = tab;
+  document.querySelector('#journalFishPanel').hidden = tab !== 'fish';
+  document.querySelector('#journalHabitatsPanel').hidden = tab !== 'habitats';
+  document.querySelector('#journalPhotosPanel').hidden = tab !== 'photos';
+  document.querySelectorAll('[data-journal-tab]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.journalTab === tab)));
+  journalDialog.scrollTop = 0;
 }
 function openJournal() {
-  if (!active || speciesDialog.open || helpDialog.open) return;
+  if (!active || speciesDialog.open || helpDialog.open || poiDialog.open || photoDialog.open) return;
   document.exitPointerLock?.();
   renderJournal();
+  setJournalTab(activeJournalTab);
   if (!journalDialog.open) journalDialog.showModal();
 }
 function openSpecies(item, justFound = false, fromJournal = false) {
@@ -614,38 +700,105 @@ function discover(item) {
   if (item.found) return;
   item.found = true;
   lastFound = item;
-  foundTotal++;
-  foundCount.textContent = foundTotal;
-  document.querySelector('#journalCount').textContent = `${foundTotal} / ${fish.length}`;
-  const row = document.querySelector(`#fish-${item.index}`);
-  row.classList.add('found'); row.disabled = false;
-  row.setAttribute('aria-label', `${item.data.name}: abrir ficha`);
-  row.querySelector('small').textContent = 'ver ficha';
+  updateFoundRow(item);
+  updateProgressUi();
+  saveProgress();
   openSpecies(item, true);
   if (foundTotal === fish.length) {
     distanceLabel.textContent = 'Todos encontrados — o aquário é seu para explorar';
   }
 }
+function fishAt(clientX, clientY) {
+  pointer.set(clientX / innerWidth * 2 - 1, -(clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(fish.map(item => item.group), true);
+  if (!hits.length) return null;
+  let object = hits[0].object;
+  while (object && object.userData.fishIndex === undefined) object = object.parent;
+  return object ? fish[object.userData.fishIndex] : null;
+}
+function showPhotoToast(message) {
+  photoToast.textContent = message;
+  photoToast.hidden = false;
+  photoToastAge = 0;
+}
+function takePhoto() {
+  if (!active || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open || photoDialog.open) return;
+  const item = fishAt(innerWidth / 2, innerHeight / 2);
+  if (!item) { showPhotoToast('Mire em um peixe para fotografar'); return; }
+  const distance = camera.position.distanceTo(item.group.position);
+  if (distance > 8) { showPhotoToast('Aproxime-se do peixe para fotografar'); return; }
+  if (distance < 1.2) { showPhotoToast('Afaste-se um pouco para enquadrar o peixe'); return; }
+  try {
+    photos[item.index] = { image: captureAquariumPhoto(renderer, scene, camera), takenAt: Date.now() };
+    photoFlashAge = 0;
+    photoFlash.hidden = false;
+    updateProgressUi();
+    const saved = saveProgress();
+    showPhotoToast(`Fotografia de ${item.data.name} registrada${saved ? '' : ' nesta sessão'}`);
+    if (!item.found) discover(item);
+  } catch (error) {
+    console.warn('Falha ao fotografar a cena:', error);
+    showPhotoToast('Não foi possível salvar a fotografia');
+  }
+}
+function openPhoto(index) {
+  const photo = photos[index];
+  if (!active || !photo || !journalDialog.open) return;
+  journalDialog.close();
+  const name = fish[index].data.name;
+  document.querySelector('#photoTitle').textContent = name;
+  const preview = document.querySelector('#photoPreview');
+  preview.src = photo.image;
+  preview.alt = `Fotografia do peixe ${name} na redoma`;
+  document.querySelector('#photoCaption').textContent = `Registrada em ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium', timeStyle: 'short' }).format(photo.takenAt)}`;
+  const download = document.querySelector('#photoDownload');
+  download.href = photo.image;
+  download.download = `aquario-noturno-peixe-${index + 1}.jpg`;
+  photoDialog.showModal();
+}
+restoreProgress();
 document.querySelector('#startButton').addEventListener('click', start);
 document.querySelector('#pulseButton').addEventListener('click', emitPulse);
 document.querySelector('#mobilePulse').addEventListener('click', emitPulse);
 document.querySelector('#lanternButton').addEventListener('click', toggleLantern);
 document.querySelector('#mobileLantern').addEventListener('click', toggleLantern);
 audioButton.addEventListener('click', toggleAudio);
+photoButton.addEventListener('click', takePhoto);
+document.querySelector('#closePhoto').addEventListener('click', () => photoDialog.close());
+document.querySelector('#backPhotoJournal').addEventListener('click', () => photoDialog.close());
+photoDialog.addEventListener('click', e => { if (e.target === photoDialog) photoDialog.close(); });
+photoDialog.addEventListener('close', () => openJournal());
 document.querySelector('#inspectPoiButton').addEventListener('click', () => openPoi());
 document.querySelector('#closePoi').addEventListener('click', () => poiDialog.close());
 document.querySelector('#resumePoi').addEventListener('click', () => poiDialog.close());
+document.querySelector('#poiBackToJournal').addEventListener('click', () => poiDialog.close());
 poiDialog.addEventListener('click', e => { if (e.target === poiDialog) poiDialog.close(); });
-poiDialog.addEventListener('close', () => { if (active && !isTouch) canvas.requestPointerLock?.(); });
+poiDialog.addEventListener('close', () => {
+  if (returnPoiToJournal) { returnPoiToJournal = false; openJournal(); }
+  else if (active && !isTouch) canvas.requestPointerLock?.();
+});
 journalButton.addEventListener('click', openJournal);
+document.querySelector('.journal-tabs').addEventListener('click', e => {
+  const button = e.target.closest('button[data-journal-tab]');
+  if (button) setJournalTab(button.dataset.journalTab);
+});
 journalEntries.addEventListener('click', e => {
   const entry = e.target.closest('button[data-fish]');
   if (entry && !entry.disabled) openSpecies(fish[Number(entry.dataset.fish)], false, true);
 });
+habitatEntries.addEventListener('click', e => {
+  const entry = e.target.closest('button[data-habitat]');
+  if (entry && !entry.disabled) openPoi(habitatPoints[Number(entry.dataset.habitat)], true);
+});
+photoEntries.addEventListener('click', e => {
+  const entry = e.target.closest('button[data-photo]');
+  if (entry && !entry.disabled) openPhoto(Number(entry.dataset.photo));
+});
 document.querySelector('#closeJournal').addEventListener('click', () => journalDialog.close());
 document.querySelector('#resumeJournal').addEventListener('click', () => journalDialog.close());
 journalDialog.addEventListener('click', e => { if (e.target === journalDialog) journalDialog.close(); });
-journalDialog.addEventListener('close', () => { if (active && !isTouch && !speciesDialog.open) canvas.requestPointerLock?.(); });
+journalDialog.addEventListener('close', () => { if (active && !isTouch && !speciesDialog.open && !poiDialog.open && !photoDialog.open) canvas.requestPointerLock?.(); });
 list.addEventListener('click', e => {
   const row = e.target.closest('button[data-fish]');
   if (row && !row.disabled) openSpecies(fish[Number(row.dataset.fish)]);
@@ -663,38 +816,33 @@ document.querySelector('#resumeButton').addEventListener('click', () => helpDial
 helpDialog.addEventListener('click', e => { if (e.target === helpDialog) helpDialog.close(); });
 helpDialog.addEventListener('close', () => { if (active && !isTouch) canvas.requestPointerLock?.(); });
 function selectFish(clientX, clientY) {
-  pointer.set(clientX / innerWidth * 2 - 1, -(clientY / innerHeight) * 2 + 1);
-  raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(fish.map(item => item.group), true);
-  if (!hits.length) return;
-  let object = hits[0].object;
-  while (object && object.userData.fishIndex === undefined) object = object.parent;
-  if (!object) return;
-  const item = fish[object.userData.fishIndex];
+  const item = fishAt(clientX, clientY);
+  if (!item) return;
   if (item.found) openSpecies(item);
   else distanceLabel.textContent = 'Aproxime-se deste peixe para registrá-lo';
 }
 canvas.addEventListener('click', e => {
-  if (!active || isTouch || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open) return;
+  if (!active || isTouch || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open || photoDialog.open) return;
   if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
   else selectFish(innerWidth / 2, innerHeight / 2);
 });
 document.addEventListener('mousemove', e => { if (active && document.pointerLockElement === canvas && !helpDialog.open) look(e.movementX, e.movementY); });
 document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
-  if (key === 'g' && active && !e.repeat && !speciesDialog.open && !helpDialog.open) {
+  if (key === 'g' && active && !e.repeat && !speciesDialog.open && !helpDialog.open && !poiDialog.open && !photoDialog.open) {
     e.preventDefault();
     if (journalDialog.open) journalDialog.close(); else openJournal();
     return;
   }
-  if (helpDialog.open || speciesDialog.open || journalDialog.open || poiDialog.open) return;
-  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e', 'f', 'l', 'm', 'r'].includes(key)) e.preventDefault();
+  if (helpDialog.open || speciesDialog.open || journalDialog.open || poiDialog.open || photoDialog.open) return;
+  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e', 'f', 'l', 'm', 'r', 'p'].includes(key)) e.preventDefault();
   pressed.add(key);
   if (key === 'e' && !e.repeat) emitPulse();
   if (key === 'f' && !e.repeat && lastFound) openSpecies(lastFound);
   if (key === 'l' && !e.repeat) toggleLantern();
   if (key === 'm' && !e.repeat) toggleAudio();
   if (key === 'r' && !e.repeat) openPoi();
+  if (key === 'p' && !e.repeat) takePhoto();
 });
 document.addEventListener('keyup', e => pressed.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => pressed.clear());
@@ -743,7 +891,7 @@ window.addEventListener('resize', () => {
 });
 
 function updatePlayer(dt) {
-  if (!active || helpDialog.open || speciesDialog.open || journalDialog.open || poiDialog.open) return;
+  if (!active || helpDialog.open || speciesDialog.open || journalDialog.open || poiDialog.open || photoDialog.open) return;
   const forward = (pressed.has('w') || pressed.has('arrowup') ? 1 : 0) - (pressed.has('s') || pressed.has('arrowdown') ? 1 : 0) - stick.y;
   const side = (pressed.has('d') || pressed.has('arrowright') ? 1 : 0) - (pressed.has('a') || pressed.has('arrowleft') ? 1 : 0) + stick.x;
   const up = (pressed.has(' ') || verticalButtons.up ? 1 : 0) - (pressed.has('control') || verticalButtons.down ? 1 : 0);
@@ -828,14 +976,14 @@ function animate(time) {
     const distance = camera.position.distanceTo(point.focus);
     if (distance < poiDistance) { activePoi = point; poiDistance = distance; }
   }
-  poiPrompt.hidden = !active || !activePoi || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open;
+  poiPrompt.hidden = !active || !activePoi || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open || photoDialog.open;
   if (!poiPrompt.hidden) document.querySelector('#poiPromptTitle').textContent = activePoi.data.title;
   nearest = null;
   let nearestDistance = Infinity;
   for (const item of fish) {
     const distance = camera.position.distanceTo(item.group.position);
     if (!item.found && distance < nearestDistance) { nearest = item; nearestDistance = distance; }
-    if (active && !speciesDialog.open && !journalDialog.open && !helpDialog.open && !poiDialog.open && distance < 2.2) discover(item);
+    if (active && !speciesDialog.open && !journalDialog.open && !helpDialog.open && !poiDialog.open && !photoDialog.open && distance < 2.2) discover(item);
     // Each fish remains attached to a point by a damped spring. A swimmer passing
     // nearby pushes it away gently, then it settles back into its resting place.
     const home = fishHome(item, distance, elapsed, tmp, motion).sub(item.group.position);
@@ -861,7 +1009,7 @@ function animate(time) {
   if (active && foundTotal !== fish.length && nearest && pulseAge > 4) {
     distanceLabel.textContent = nearestDistance < 5 ? `Uma luz está a ${Math.ceil(nearestDistance)} m` : 'Explore a água';
   }
-  sonarReadout.hidden = !active || !nearest || pulseAge > 4 || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open;
+  sonarReadout.hidden = !active || !nearest || pulseAge > 4 || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open || photoDialog.open;
   if (!sonarReadout.hidden) {
     const dx = nearest.group.position.x - camera.position.x;
     const dz = nearest.group.position.z - camera.position.z;
@@ -879,6 +1027,10 @@ function animate(time) {
   glassRippleAge += dt;
   glassNoticeAge += dt;
   glassNotice.hidden = glassNoticeAge > 1.6;
+  photoToastAge += dt;
+  photoToast.hidden = photoToastAge > 2.8 || photoDialog.open || journalDialog.open || speciesDialog.open || poiDialog.open || helpDialog.open;
+  photoFlashAge += dt;
+  photoFlash.hidden = photoFlashAge > .18;
   if (glassRippleAge < 1.05) {
     glassRipple.visible = true;
     glassRipple.scale.setScalar(.22 + glassRippleAge * 1.9);

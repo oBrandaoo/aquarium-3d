@@ -17,6 +17,7 @@
         <div class="top-note">Peixes da costa brasileira</div>
         <div class="top-actions">
           <button class="journal-button" id="journalButton" type="button" hidden>Diário <span id="journalCount">0 / 5</span></button>
+          <button class="sound-button photo-button" id="photoButton" type="button" aria-label="Fotografar peixe" title="Fotografar peixe (P)" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 7h4l2-2h6l2 2h4v12H3z"/><circle cx="12" cy="13" r="3.3"/></svg></button>
           <button class="sound-button audio-button" id="audioButton" type="button" aria-label="Ativar som ambiente" aria-pressed="false" title="Ativar som ambiente (M)" hidden>♪</button>
           <button class="sound-button" id="helpButton" type="button" aria-label="Abrir instruções">?</button>
         </div>
@@ -42,6 +43,8 @@
 
         <div class="sonar-readout" id="sonarReadout" role="status" aria-live="polite" hidden><span id="sonarArrow" aria-hidden="true">↑</span><span id="sonarText"></span></div>
         <div class="glass-notice" id="glassNotice" role="status" aria-live="polite" hidden>Você tocou o vidro da redoma</div>
+        <div class="photo-flash" id="photoFlash" aria-hidden="true" hidden></div>
+        <div class="photo-toast" id="photoToast" role="status" aria-live="polite" hidden></div>
         <div class="poi-prompt" id="poiPrompt" hidden><span><small>Ponto de interesse</small><strong id="poiPromptTitle"></strong></span><button id="inspectPoiButton" type="button">Explorar habitat <kbd>R</kbd></button></div>
 
         <div class="crosshair" id="crosshair" aria-hidden="true" hidden><i></i><i></i><i></i><i></i></div>
@@ -64,13 +67,29 @@
           <button class="dialog-close" id="closeJournal" aria-label="Fechar diário" type="button">×</button>
           <span class="discovery-kicker">Coleção da expedição</span>
           <h2 id="journalTitle">Diário de bordo</h2>
-          <p>Volte às fichas dos peixes que você já encontrou.</p>
-          <div id="journalEntries" class="journal-entries"></div>
+          <p>Suas descobertas e fotografias ficam guardadas neste navegador.</p>
+          <div class="journal-progress" id="journalProgress" aria-label="Progresso da expedição"></div>
+          <nav class="journal-tabs" aria-label="Seções do diário"><button type="button" data-journal-tab="fish" aria-pressed="true">Peixes</button><button type="button" data-journal-tab="habitats" aria-pressed="false">Habitats</button><button type="button" data-journal-tab="photos" aria-pressed="false">Fotos</button></nav>
+          <section id="journalFishPanel"><h3>Peixes encontrados</h3><div id="journalEntries" class="journal-entries"></div></section>
+          <section id="journalHabitatsPanel" hidden><h3>Habitats visitados <span id="habitatCount">0 / 3</span></h3><div id="habitatEntries" class="journal-entries"></div></section>
+          <section id="journalPhotosPanel" hidden><h3>Álbum fotográfico <span id="photoCount">0 / 5</span></h3><div id="photoEntries" class="photo-entries"></div></section>
+          <p class="journal-completion" id="journalCompletion" hidden>✳ Expedição completa: todos os peixes, habitats e retratos registrados.</p>
           <button class="dialog-action" id="resumeJournal" type="button">Voltar à água</button>
+        </dialog>
+
+        <dialog class="photo-dialog" id="photoDialog" aria-labelledby="photoTitle">
+          <button class="dialog-close" id="closePhoto" aria-label="Fechar fotografia" type="button">×</button>
+          <span class="discovery-kicker">Álbum da expedição</span>
+          <h2 id="photoTitle"></h2>
+          <img id="photoPreview" alt="" />
+          <p id="photoCaption"></p>
+          <a id="photoDownload" download="aquario-noturno.jpg">Baixar fotografia ↗</a>
+          <button class="dialog-action" id="backPhotoJournal" type="button">Voltar ao diário</button>
         </dialog>
 
         <dialog class="poi-dialog" id="poiDialog" aria-labelledby="poiTitle">
           <button class="dialog-close" id="closePoi" aria-label="Fechar habitat" type="button">×</button>
+          <button class="species-back" id="poiBackToJournal" type="button" hidden>← Voltar ao diário</button>
           <span class="discovery-kicker" id="poiKicker">Habitat brasileiro</span>
           <h2 id="poiTitle"></h2>
           <p class="poi-region" id="poiRegion"></p>
@@ -81,7 +100,7 @@
         </dialog>
 
         <div class="play-footer" id="playFooter" hidden>
-          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span> &nbsp; R <span>habitat</span> &nbsp; M <span>som</span></div>
+          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span> &nbsp; P <span>foto</span> &nbsp; R <span>habitat</span></div>
           <div class="footer-actions"><button class="pulse-button" id="lanternButton" type="button" aria-pressed="false">✦ Lanterna <kbd>L</kbd></button><button class="pulse-button" id="pulseButton" type="button"><span class="pulse-icon" aria-hidden="true"></span> Emitir pulso <kbd>E</kbd></button></div>
         </div>
 
@@ -94,9 +113,9 @@
           <button class="dialog-close" id="closeHelp" aria-label="Fechar instruções" type="button">×</button>
           <span class="discovery-kicker">Guia da expedição</span>
           <h2 id="helpTitle">Siga as luzes.</h2>
-          <p>Explore a redoma e encontre cinco espécies marinhas do Brasil. Depois, abra qualquer ficha pelo diário ou selecione o peixe na água.</p>
-          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço e Ctrl para mudar de altura, E para usar o sonar, L para ligar a lanterna, G para abrir o diário, R para conhecer um habitat próximo e M para alternar o som. Clique na água para capturar o mouse.</p>
-          <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita para olhar e toque nos botões para mudar de altura, acender a lanterna e emitir um pulso. Toque em “Explorar habitat” perto de um marco luminoso.</p>
+          <p>Explore a redoma, fotografe cinco espécies marinhas do Brasil e visite os três habitats. O diário guarda suas descobertas neste navegador.</p>
+          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço e Ctrl para mudar de altura, E para o sonar, L para a lanterna, G para o diário, P para fotografar, R para conhecer um habitat próximo e M para o som. Mire no peixe e clique na água para abrir uma ficha já descoberta.</p>
+          <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita para olhar. Toque no ícone de câmera para fotografar e em “Explorar habitat” perto de um marco luminoso.</p>
           <button class="dialog-action" id="resumeButton" type="button">Voltar à água</button>
         </dialog>
 
