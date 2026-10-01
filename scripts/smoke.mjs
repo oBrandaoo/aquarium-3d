@@ -22,7 +22,7 @@ try {
   assert.equal(await desktop.locator('#journalButton').isVisible(), true);
   await desktop.keyboard.press('g');
   assert.equal(await desktop.locator('#journalDialog').isVisible(), true);
-  assert.equal(await desktop.locator('#journalEntries .journal-entry:disabled').count(), 5);
+  assert.equal(await desktop.locator('#journalEntries .journal-entry:disabled').count(), 9);
   await desktop.getByRole('button', { name: 'Voltar à água' }).click();
   await desktop.keyboard.press('l');
   assert.equal(await desktop.locator('#lanternButton').getAttribute('aria-pressed'), 'true');
@@ -74,7 +74,7 @@ try {
   await desktop.locator('#journalEntries .journal-entry.is-found').click();
   assert.equal(await desktop.locator('#speciesScientific').innerText(), 'Abudefduf saxatilis');
   await desktop.getByRole('button', { name: 'Voltar ao diário' }).click();
-  assert.equal(await desktop.locator('#journalDialog').isVisible(), true);
+  await desktop.locator('#journalDialog').waitFor({ state: 'visible' });
   await desktop.getByRole('button', { name: 'Fotos', exact: true }).click();
   await desktop.screenshot({ path: 'preview-journal.png' });
   await desktop.locator('#photoEntries .has-photo').click();
@@ -83,12 +83,12 @@ try {
   assert.match(await desktop.locator('#photoDownload').getAttribute('href'), /^data:image\/jpeg;base64,/);
   await desktop.screenshot({ path: 'preview-photo.png' });
   await desktop.getByRole('button', { name: 'Voltar ao diário' }).click();
-  assert.equal(await desktop.locator('#journalDialog').isVisible(), true);
+  await desktop.locator('#journalDialog').waitFor({ state: 'visible' });
   await desktop.getByRole('button', { name: 'Habitats', exact: true }).click();
   await desktop.locator('#habitatEntries .is-found').click();
   assert.match(await desktop.locator('#poiTitle').innerText(), /Abrolhos/);
   await desktop.getByRole('button', { name: 'Voltar ao diário' }).click();
-  assert.equal(await desktop.locator('#journalDialog').isVisible(), true);
+  await desktop.locator('#journalDialog').waitFor({ state: 'visible' });
   await desktop.getByRole('button', { name: 'Voltar à água' }).click();
   await desktop.screenshot({ path: 'preview-playing.png' });
   await desktop.reload({ waitUntil: 'networkidle' });

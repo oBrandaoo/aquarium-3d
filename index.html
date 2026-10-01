@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#06172b" />
-    <meta name="description" content="Explore um aquário noturno em 3D e encontre cinco peixes luminosos." />
+    <meta name="description" content="Explore um aquário noturno em 3D e encontre nove peixes brasileiros." />
     <title>Aquário Noturno — uma expedição submersa</title>
   </head>
   <body>
@@ -16,7 +16,7 @@
         <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>Aquário<br><em>Noturno</em></span></div>
         <div class="top-note">Peixes da costa brasileira</div>
         <div class="top-actions">
-          <button class="journal-button" id="journalButton" type="button" hidden>Diário <span id="journalCount">0 / 5</span></button>
+          <button class="journal-button" id="journalButton" type="button" hidden>Diário <span id="journalCount">0 / 9</span></button>
           <button class="sound-button photo-button" id="photoButton" type="button" aria-label="Fotografar peixe" title="Fotografar peixe (P)" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 7h4l2-2h6l2 2h4v12H3z"/><circle cx="12" cy="13" r="3.3"/></svg></button>
           <button class="sound-button audio-button" id="audioButton" type="button" aria-label="Ativar som ambiente" aria-pressed="false" title="Ativar som ambiente (M)" hidden>♪</button>
           <button class="sound-button" id="helpButton" type="button" aria-label="Abrir instruções">?</button>
@@ -28,15 +28,15 @@
           <div class="intro-inner">
             <div class="tiny-line"><span class="tiny-dot"></span> A água guarda pequenas luzes</div>
             <h1 id="introTitle">O oceano<br>acorda <em>à noite.</em></h1>
-            <p>Nade entre plantas e partículas brilhantes. Encontre cinco espécies reais do litoral brasileiro e descubra onde vivem.</p>
+            <p>Nade entre plantas e partículas brilhantes. Encontre nove espécies reais do litoral brasileiro e descubra onde vivem.</p>
             <button id="startButton" class="primary-button" type="button"><span>Começar a explorar</span><span class="button-arrow" aria-hidden="true">↗</span></button>
             <div class="intro-controls"><span>W A S D para nadar</span><span>Mouse para olhar</span><span>E para emitir um pulso</span></div>
           </div>
-          <div class="intro-index" aria-hidden="true"><span>01 / 05</span><span>↓</span></div>
+          <div class="intro-index" aria-hidden="true"><span>01 / 09</span><span>↓</span></div>
         </section>
 
         <aside class="hud" id="hud" aria-label="Progresso da expedição" hidden>
-          <div class="hud-heading"><span>Diário de bordo</span><strong><span id="foundCount">0</span> / 5</strong></div>
+          <div class="hud-heading"><span>Diário de bordo</span><strong><span id="foundCount">0</span> / 9</strong></div>
           <div class="fish-list" id="fishList"></div>
           <div class="hud-bottom"><span id="distanceLabel">Explore a água</span><span class="hud-wave" aria-hidden="true">〰</span></div>
         </aside>
@@ -72,7 +72,7 @@
           <nav class="journal-tabs" aria-label="Seções do diário"><button type="button" data-journal-tab="fish" aria-pressed="true">Peixes</button><button type="button" data-journal-tab="habitats" aria-pressed="false">Habitats</button><button type="button" data-journal-tab="photos" aria-pressed="false">Fotos</button></nav>
           <section id="journalFishPanel"><h3>Peixes encontrados</h3><div id="journalEntries" class="journal-entries"></div></section>
           <section id="journalHabitatsPanel" hidden><h3>Habitats visitados <span id="habitatCount">0 / 3</span></h3><div id="habitatEntries" class="journal-entries"></div></section>
-          <section id="journalPhotosPanel" hidden><h3>Álbum fotográfico <span id="photoCount">0 / 5</span></h3><div id="photoEntries" class="photo-entries"></div></section>
+          <section id="journalPhotosPanel" hidden><h3>Álbum fotográfico <span id="photoCount">0 / 9</span></h3><div id="photoEntries" class="photo-entries"></div></section>
           <p class="journal-completion" id="journalCompletion" hidden>✳ Expedição completa: todos os peixes, habitats e retratos registrados.</p>
           <button class="dialog-action" id="resumeJournal" type="button">Voltar à água</button>
         </dialog>
@@ -113,7 +113,7 @@
           <button class="dialog-close" id="closeHelp" aria-label="Fechar instruções" type="button">×</button>
           <span class="discovery-kicker">Guia da expedição</span>
           <h2 id="helpTitle">Siga as luzes.</h2>
-          <p>Explore a redoma, fotografe cinco espécies marinhas do Brasil e visite os três habitats. O diário guarda suas descobertas neste navegador.</p>
+          <p>Explore a redoma, fotografe nove espécies marinhas do Brasil e visite os três habitats. O diário guarda suas descobertas neste navegador.</p>
           <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço e Ctrl para mudar de altura, E para o sonar, L para a lanterna, G para o diário, P para fotografar, R para conhecer um habitat próximo e M para o som. Mire no peixe e clique na água para abrir uma ficha já descoberta.</p>
           <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita para olhar. Toque no ícone de câmera para fotografar e em “Explorar habitat” perto de um marco luminoso.</p>
           <button class="dialog-action" id="resumeButton" type="button">Voltar à água</button>

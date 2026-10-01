@@ -35,11 +35,15 @@ const crosshair = document.querySelector('#crosshair');
 const isTouch = matchMedia('(pointer: coarse)').matches;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const fishData = [
-  { name: 'Sargento', short: 'Sargento', scientific: 'Abudefduf saxatilis', place: 'Litoral brasileiro e ilhas oceânicas', habitat: 'Recifes rasos, costões rochosos e áreas próximas à areia.', trait: 'Corpo prateado com dorso amarelado e cinco barras pretas.', behavior: 'Patrulha lentamente uma faixa do recife e acelera a cauda quando você se aproxima.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sergeant-major/', color: '#e7d786', accent: '#c8c786', type: 'sergeant', body: [.79, .55, .23], at: [0, 1.35, 3.5], size: .91, yaw: -.4 },
-  { name: 'Borboleta-listrada', short: 'Borboleta', scientific: 'Chaetodon striatus', place: 'Litoral até o Sudeste e ilhas oceânicas brasileiras', habitat: 'Recifes de coral e costões rochosos.', trait: 'Corpo alto e fino, bege, com quatro barras pretas e estrias delicadas.', behavior: 'Fica perto dos corais e recua para um abrigo ao perceber um nadador.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#e9ddad', accent: '#e9d89a', type: 'butterfly', body: [.66, .72, .17], at: [-8, .9, -6], size: .84, yaw: .8 },
-  { name: 'Cirurgião-azul', short: 'Cirurgião', scientific: 'Acanthurus coeruleus', place: 'Costa brasileira até São Paulo e ilhas oceânicas', habitat: 'Recifes e áreas rochosas onde pasta algas.', trait: 'Adulto azul intenso, corpo achatado e espinho claro na base da cauda.', behavior: 'Passeia entre manchas de algas e inclina a cabeça como se estivesse pastando.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#2876c7', accent: '#1b4d96', type: 'tang', body: [.9, .53, .19], at: [8.4, 1.8, -7.5], size: 1.02, yaw: 2.6 },
-  { name: 'Peixe-frade', short: 'Frade', scientific: 'Pomacanthus paru', place: 'Recifes e costões do litoral brasileiro', habitat: 'Áreas recifais com fendas e abrigo entre corais.', trait: 'Corpo escuro com bordas douradas nas escamas e nadadeiras altas.', behavior: 'Desliza entre rochas e desce para a sombra quando alguém chega perto.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/french-angelfish/', color: '#c9aa5a', accent: '#bca04d', type: 'angelfish', body: [.71, .72, .18], at: [-9.2, 3.2, 7.1], size: .95, yaw: -1.3 },
-  { name: 'Salema', short: 'Salema', scientific: 'Anisotremus virginicus', place: 'Litoral brasileiro, inclusive Sergipe e Santa Catarina', habitat: 'Fundos rochosos e coralinos do litoral.', trait: 'Corpo prateado com faixas amarelas horizontais e duas barras pretas na cabeça.', behavior: 'Cruza a borda rochosa em pequenos trajetos e vira antes de se afastar demais.', source: 'https://faep.eng.br/arquivos/ebooks/catalogo_de_pescados_de_sergipe_e_adjacencias.pdf', color: '#e9d895', accent: '#f2c951', type: 'porkfish', body: [.91, .49, .22], at: [9, .6, 7.2], size: .94, yaw: 1.8 },
+  { name: 'Sargento', short: 'Sargento', scientific: 'Abudefduf saxatilis', place: 'Litoral brasileiro e ilhas oceânicas', habitat: 'Recifes rasos, costões rochosos e áreas próximas à areia.', trait: 'Corpo prateado com dorso amarelado e cinco barras pretas.', behavior: 'Patrulha lentamente uma faixa do recife e acelera a cauda quando você se aproxima.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sergeant-major/', color: '#e7d786', accent: '#c8c786', type: 'sergeant', body: [.79, .55, .23], at: [0, 1.35, 3.5], size: 1.08, yaw: -.4 },
+  { name: 'Borboleta-listrada', short: 'Borboleta', scientific: 'Chaetodon striatus', place: 'Litoral até o Sudeste e ilhas oceânicas brasileiras', habitat: 'Recifes de coral e costões rochosos.', trait: 'Corpo alto e fino, bege, com quatro barras pretas e estrias delicadas.', behavior: 'Fica perto dos corais e recua para um abrigo ao perceber um nadador.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#e9ddad', accent: '#e9d89a', type: 'butterfly', body: [.66, .72, .17], at: [-8, .9, -6], size: 1.02, yaw: .8 },
+  { name: 'Cirurgião-azul', short: 'Cirurgião', scientific: 'Acanthurus coeruleus', place: 'Costa brasileira até São Paulo e ilhas oceânicas', habitat: 'Recifes e áreas rochosas onde pasta algas.', trait: 'Adulto azul intenso, corpo achatado e espinho claro na base da cauda.', behavior: 'Passeia entre manchas de algas e inclina a cabeça como se estivesse pastando.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#2876c7', accent: '#1b4d96', type: 'tang', body: [.9, .53, .19], at: [8.4, 1.8, -7.5], size: 1.19, yaw: 2.6 },
+  { name: 'Peixe-frade', short: 'Frade', scientific: 'Pomacanthus paru', place: 'Recifes e costões do litoral brasileiro', habitat: 'Áreas recifais com fendas e abrigo entre corais.', trait: 'Corpo escuro com bordas douradas nas escamas e nadadeiras altas.', behavior: 'Desliza entre rochas e desce para a sombra quando alguém chega perto.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/french-angelfish/', color: '#c9aa5a', accent: '#bca04d', type: 'angelfish', body: [.71, .72, .18], at: [-9.2, 3.2, 7.1], size: 1.12, yaw: -1.3 },
+  { name: 'Salema', short: 'Salema', scientific: 'Anisotremus virginicus', place: 'Litoral brasileiro, inclusive Sergipe e Santa Catarina', habitat: 'Fundos rochosos e coralinos do litoral.', trait: 'Corpo prateado com faixas amarelas horizontais e duas barras pretas na cabeça.', behavior: 'Cruza a borda rochosa em pequenos trajetos e vira antes de se afastar demais.', source: 'https://faep.eng.br/arquivos/ebooks/catalogo_de_pescados_de_sergipe_e_adjacencias.pdf', color: '#e9d895', accent: '#f2c951', type: 'porkfish', body: [.91, .49, .22], at: [9, .6, 7.2], size: 1.11, yaw: 1.8 },
+  { name: 'Budião-azul', short: 'Budião', scientific: 'Scarus trispinosus', place: 'Do Maranhão a Santa Catarina, incluindo Abrolhos', habitat: 'Recifes rasos e fundos rochosos com algas.', trait: 'Azul vivo, escamas marcadas e dentes esverdeados unidos em um bico.', behavior: 'Percorre o recife em arcos amplos e abaixa a cabeça perto das algas.', source: 'https://www.gov.br/icmbio/pt-br/centrais-de-conteudo/publicacoes/publicacoes-diversas/Mohr_et_al_2009.pdf', color: '#45b9cb', accent: '#3ac5bb', type: 'parrot', body: [1.05, .6, .28], at: [4.8, 3.35, -1.5], size: 1.2, yaw: 2.6 },
+  { name: 'Mero', short: 'Mero', scientific: 'Epinephelus itajara', place: 'Costa brasileira, incluindo os recifes de Alagoas', habitat: 'Jovens usam manguezais e recifes rasos; adultos ocupam recifes mais afastados.', trait: 'Corpo muito robusto, boca larga e manchas escuras sobre o marrom.', behavior: 'Move-se devagar ao redor de uma rocha e responde com uma caudada pesada.', source: 'https://revistaeletronica.icmbio.gov.br/BioBR/article/view/2781', color: '#ad9675', accent: '#8f8169', type: 'grouper', body: [1.22, .78, .48], at: [-6.4, -.7, -11.2], size: 1.65, yaw: .45 },
+  { name: 'Peixe-porco', short: 'Peixe-porco', scientific: 'Balistes capriscus', place: 'Litoral Sudeste e Sul do Brasil', habitat: 'Áreas rochosas e recifais com fendas.', trait: 'Corpo alto verde-acinzentado, linhas azuladas e espinho dorsal ereto.', behavior: 'Paira perto das pedras e ergue o espinho quando percebe movimento.', source: 'https://www.fisheries.noaa.gov/species/gray-triggerfish', color: '#a6b7a1', accent: '#7caca8', type: 'trigger', body: [.78, .72, .23], at: [11.7, 2.8, 3.1], size: 1.28, yaw: -1.6 },
+  { name: 'Cavalo-marinho', short: 'Cavalo-marinho', scientific: 'Hippocampus reidi', place: 'Costa brasileira e ilhas oceânicas', habitat: 'Entre algas, corais e raízes de mangue.', trait: 'Corpo vertical, focinho longo, pintas escuras e cauda preênsil enrolada.', behavior: 'Oscila suavemente entre as plantas, usando a cauda para se manter no lugar.', source: 'https://www.gov.br/icmbio/pt-br/centrais-de-conteudo/publicacoes/publicacoes-diversas/Mohr_et_al_2009.pdf', color: '#e9a568', accent: '#f3c184', type: 'seahorse', body: [.46, .88, .18], at: [-5.9, .05, .2], size: 1.35, yaw: .7 },
 ];
 const habitatData = [
   { title: 'Chapeirões de Abrolhos', region: 'Banco dos Abrolhos · Bahia', kind: 'Recife de coral', description: 'O Parque Nacional Marinho dos Abrolhos protege parte do maior complexo recifal do Atlântico Sul. Os chapeirões são formações características da região e oferecem espaço para muitos peixes recifais.', source: 'https://www.gov.br/icmbio/pt-br/assuntos/unidade-de-conservacao/unidades-de-biomas/marinho/lista-de-ucs/parna-marinho-dos-abrolhos/pesquisa-e-monitoramento/pesquisa-e-monitoramento', color: '#d791a0', at: [-2.7, -2.35, 7.9], type: 'coral' },
@@ -94,7 +98,7 @@ lantern.target.position.set(0, -.12, -4);
 camera.add(lantern, lantern.target);
 let lanternOn = false;
 
-const domeRadius = 15.8;
+const domeRadius = 18.8;
 const domeBase = -2.65;
 const domeHeightScale = .78;
 const dome = new THREE.Mesh(
@@ -156,7 +160,7 @@ function domeInteriorRadiusAt(y) {
 }
 
 // A low, uneven seabed leaves plenty of room to swim while hiding the tank edge in fog.
-const groundGeometry = new THREE.PlaneGeometry(42, 42, 80, 80);
+const groundGeometry = new THREE.PlaneGeometry(48, 48, 96, 96);
 groundGeometry.rotateX(-Math.PI / 2);
 const groundPositions = groundGeometry.attributes.position;
 for (let i = 0; i < groundPositions.count; i++) {
@@ -176,10 +180,10 @@ groundGeometry.computeVertexNormals();
 scene.add(new THREE.Mesh(groundGeometry, mat('#144056', { roughness: 1, side: THREE.DoubleSide })));
 
 const pebbleGeo = new THREE.IcosahedronGeometry(1, 0);
-const pebbles = new THREE.InstancedMesh(pebbleGeo, mat('#477b88', { roughness: 1 }), 360);
+const pebbles = new THREE.InstancedMesh(pebbleGeo, mat('#477b88', { roughness: 1 }), 450);
 const pebbleDummy = new THREE.Object3D();
-for (let i = 0; i < 360; i++) {
-  const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 14.9;
+for (let i = 0; i < 450; i++) {
+  const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 17.9;
   const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius;
   pebbleDummy.position.set(x, -2.52 + Math.sin(x * .33) * .17 + Math.cos(z * .42) * .13, z);
   pebbleDummy.rotation.set(random() * 3, random() * 3, random() * 3);
@@ -194,9 +198,9 @@ const rocks = new THREE.Group();
 scene.add(rocks);
 const rockGeo = new THREE.DodecahedronGeometry(1, 1);
 const rockMats = [mat('#1a3a4b'), mat('#224958'), mat('#1b3448'), mat('#2b5864')];
-for (let i = 0; i < 48; i++) {
+for (let i = 0; i < 58; i++) {
   const angle = random() * Math.PI * 2;
-  const radius = between(6, 14.2);
+  const radius = between(6, 17.3);
   const x = Math.cos(angle) * radius, z = Math.sin(angle) * radius;
   const rock = new THREE.Mesh(rockGeo, rockMats[i % rockMats.length]);
   rock.position.set(x, -2.2, z);
@@ -246,9 +250,9 @@ function addPlant(x, z, height, index) {
   scene.add(root);
   seaweed.push({ root, phase: random() * Math.PI * 2, amount: between(.045, .13) });
 }
-for (let i = 0; i < 62; i++) {
+for (let i = 0; i < 90; i++) {
   const angle = random() * Math.PI * 2;
-  const radius = between(2.5, 14.1);
+  const radius = between(2.5, 17.5);
   addPlant(Math.cos(angle) * radius, Math.sin(angle) * radius, between(.8, 2.6), i);
 }
 for (const data of fishData) {
@@ -267,8 +271,8 @@ const coralMaterials = [
   mat('#cf8f89', { emissive: '#a95968', emissiveIntensity: .45 }),
   mat('#668caa', { emissive: '#396c9e', emissiveIntensity: .56 }),
 ];
-for (let c = 0; c < 28; c++) {
-  const angle = random() * Math.PI * 2, radius = between(4, 14);
+for (let c = 0; c < 36; c++) {
+  const angle = random() * Math.PI * 2, radius = between(4, 17.4);
   const coral = new THREE.Group();
   coral.position.set(Math.cos(angle) * radius, -2.45, Math.sin(angle) * radius);
   const material = coralMaterials[c % coralMaterials.length];
@@ -325,6 +329,21 @@ function bodyColor(type, x, y) {
     const row = (y + 1) * 10;
     const col = (x + 1) * 10 + Math.floor(row) * .5;
     if (x < .49 && x > -.8 && Math.abs(row % 1 - .48) < .16 && Math.abs(col % 1 - .5) < .35) color.lerp(gold, .9);
+  } else if (type === 'parrot') {
+    color.set('#167fb4').lerp(new THREE.Color('#53c8c3'), THREE.MathUtils.smoothstep(x + y * .25, -.8, .85));
+    const scale = Math.sin(x * 34 + Math.floor(y * 23) * 1.2);
+    if (scale > .78 && x < .55) color.lerp(new THREE.Color('#85e1ce'), .22);
+    if (y < -.7) color.lerp(deepBlue, .28);
+  } else if (type === 'grouper') {
+    color.set('#a89c7a').lerp(new THREE.Color('#766c56'), THREE.MathUtils.smoothstep(y, -.8, .9) * .6);
+    const spot = Math.sin(x * 37 + Math.floor(y * 22) * 1.9) * Math.cos(y * 30 - Math.floor(x * 18));
+    if (spot > .54 && x < .75) color.lerp(new THREE.Color('#463e34'), .77);
+    if (x > .55) color.lerp(new THREE.Color('#b5a785'), .3);
+  } else if (type === 'trigger') {
+    color.set('#7e938c').lerp(new THREE.Color('#b8baa0'), THREE.MathUtils.smoothstep(-y, -.8, .8) * .58);
+    const mark = Math.sin(x * 29 + y * 11) * Math.cos(y * 35);
+    if (mark > .84) color.lerp(new THREE.Color('#79c2bb'), .65);
+    if (y > .64) color.lerp(new THREE.Color('#566e70'), .26);
   } else {
     color.copy(silver).lerp(cream, .45);
     if (Math.sin((y + .79) * 37) > .68) color.lerp(yellow, .92);
@@ -368,14 +387,77 @@ function makeBody(data) {
     const x = positions.getX(i);
     const head = THREE.MathUtils.smoothstep(x, .08, 1);
     const tail = THREE.MathUtils.smoothstep(-x, .42, 1);
-    positions.setXYZ(i, x + head * .07, positions.getY(i) * (1 - head * .34 - tail * .12), positions.getZ(i) * (1 - head * .26 - tail * .19));
+    let yy = positions.getY(i) * (1 - head * .34 - tail * .12);
+    let zz = positions.getZ(i) * (1 - head * .26 - tail * .19);
+    if (data.type === 'grouper') { yy *= 1 - head * .08; zz *= 1 + head * .08; }
+    if (data.type === 'trigger') { yy *= 1 + Math.abs(x) * .11; zz *= 1 - Math.abs(x) * .22; }
+    if (data.type === 'parrot') yy *= 1 - head * .12;
+    positions.setXYZ(i, x + head * (data.type === 'grouper' ? .02 : .07), yy, zz);
   }
   geometry.computeVertexNormals();
   const body = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ map: bodyTexture(data.type), roughness: .72, metalness: .02 }));
   body.scale.set(...data.body);
   return body;
 }
+function createSeahorse(data, index) {
+  const anchor = new THREE.Vector3(...data.at);
+  const group = new THREE.Group();
+  group.userData.fishIndex = index;
+  group.position.copy(anchor);
+  group.rotation.y = data.yaw;
+  group.scale.setScalar(data.size);
+  const skin = mat('#d68c56', { roughness: .79 });
+  const belly = mat('#f2c684', { roughness: .8 });
+  const ridge = mat('#f6d697');
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 16), skin);
+  body.position.set(-.16, -.05, 0); body.scale.set(.39, .65, .22); body.rotation.z = -.2; group.add(body);
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), belly);
+  chest.position.set(.09, -.08, .005); chest.scale.set(.24, .47, .185); group.add(chest);
+  const neck = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), skin);
+  neck.position.set(-.24, .48, 0); neck.scale.set(.21, .42, .18); neck.rotation.z = -.4; group.add(neck);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), skin);
+  head.position.set(-.02, .78, 0); head.scale.set(.32, .27, .21); group.add(head);
+  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(.085, .12, .55, 12), belly);
+  muzzle.rotation.z = -Math.PI / 2; muzzle.position.set(.42, .69, 0); group.add(muzzle);
+  const lip = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), skin);
+  lip.position.set(.72, .69, 0); lip.scale.set(.1, .11, .12); group.add(lip);
+  const tailPivot = new THREE.Group(); tailPivot.position.set(-.2, -.57, 0); group.add(tailPivot);
+  const curl = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0, 0), new THREE.Vector3(-.17, -.27, 0),
+    new THREE.Vector3(-.19, -.63, 0), new THREE.Vector3(.02, -.87, 0),
+    new THREE.Vector3(.22, -.77, 0), new THREE.Vector3(.19, -.56, 0),
+    new THREE.Vector3(.02, -.56, 0),
+  ]);
+  tailPivot.add(new THREE.Mesh(new THREE.TubeGeometry(curl, 36, .105, 8, false), skin));
+  const pectoralFins = [];
+  for (const side of [-1, 1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.055, 12, 8), mat('#17272b', { roughness: .14 }));
+    eye.position.set(.04, .82, side * .19); group.add(eye);
+    const fin = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), mat('#f2b879', { side: THREE.DoubleSide, transparent: true, opacity: .82 }));
+    fin.position.set(-.39, .4, side * .15); fin.scale.set(.17, .22, .026); fin.rotation.z = -.48; group.add(fin); pectoralFins.push(fin);
+    for (let j = 0; j < 6; j++) {
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(.025, 7, 5), mat('#9b5a40'));
+      dot.position.set(-.12 + (j % 2) * .13, .24 - Math.floor(j / 2) * .22, side * .205); group.add(dot);
+    }
+  }
+  for (let j = 0; j < 6; j++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.185 - j * .012, .013, 5, 14, Math.PI), ridge);
+    ring.rotation.y = Math.PI / 2; ring.position.set(-.26, .38 - j * .2, 0); group.add(ring);
+  }
+  for (let j = 0; j < 3; j++) {
+    const crest = new THREE.Mesh(new THREE.ConeGeometry(.065 - j * .01, .18 - j * .025, 5), ridge);
+    crest.position.set(-.27 + j * .13, 1.01 + (2 - j) * .035, 0); group.add(crest);
+  }
+  group.add(new THREE.PointLight('#f4b987', 1.6, 3, 2));
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowMap, color: data.color, transparent: true, opacity: .06, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glow.scale.set(2.5, 2.5, 1); group.add(glow);
+  const aura = new THREE.Mesh(new THREE.TorusGeometry(1.02, .007, 4, 64), new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0, depthWrite: false }));
+  aura.rotation.y = Math.PI / 2; group.add(aura);
+  scene.add(group);
+  return { data, index, group, anchor, velocity: new THREE.Vector3(), tailPivot, pectoralFins, aura, glow, phase: index * 1.37, found: false };
+}
 function createFish(data, index) {
+  if (data.type === 'seahorse') return createSeahorse(data, index);
   const anchor = new THREE.Vector3(...data.at);
   const group = new THREE.Group();
   group.userData.fishIndex = index;
@@ -389,7 +471,7 @@ function createFish(data, index) {
   const peduncle = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), mat(data.color));
   peduncle.position.x = -.06; peduncle.scale.set(.25, .11, .11); tailPivot.add(peduncle);
   const tailShape = new THREE.Shape();
-  const roundedTail = data.type === 'angelfish' || data.type === 'butterfly';
+  const roundedTail = ['angelfish', 'butterfly', 'grouper', 'trigger'].includes(data.type);
   tailShape.moveTo(-.11, 0);
   tailShape.bezierCurveTo(-.28, .05, roundedTail ? -.48 : -.48, roundedTail ? .29 : .41, roundedTail ? -.56 : -.71, roundedTail ? .29 : .38);
   tailShape.quadraticCurveTo(roundedTail ? -.7 : -.46, 0, roundedTail ? -.56 : -.71, roundedTail ? -.29 : -.38);
@@ -398,7 +480,7 @@ function createFish(data, index) {
   const tail = new THREE.Mesh(new THREE.ExtrudeGeometry(tailShape, { depth: .025, bevelEnabled: true, bevelThickness: .015, bevelSize: .017, bevelSegments: 1 }), finMat);
   tail.position.z = -.013; tailPivot.add(tail); group.add(tailPivot);
   const dorsalShape = new THREE.Shape();
-  const tallFin = data.type === 'angelfish' || data.type === 'butterfly';
+  const tallFin = ['angelfish', 'butterfly', 'trigger'].includes(data.type);
   dorsalShape.moveTo(-length * .77, height * .52);
   dorsalShape.quadraticCurveTo(-length * .78, height * (tallFin ? 1.42 : 1.15), -length * .36, height * (tallFin ? 1.32 : 1.1));
   dorsalShape.quadraticCurveTo(length * .22, height * (tallFin ? 1.16 : 1.02), length * .7, height * .48);
@@ -415,18 +497,38 @@ function createFish(data, index) {
     const mouth = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), mat('#d3d6c9'));
     mouth.position.set(length * .98, -.18, 0); mouth.scale.set(.11, .09, .11); group.add(mouth);
   }
+  if (data.type === 'parrot') {
+    const beak = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), mat('#a8d0a4', { roughness: .42 }));
+    beak.position.set(length * 1.02, -.19, 0); beak.scale.set(.24, .18, .2); group.add(beak);
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(.18, .018, .29), mat('#597e76'));
+    seam.position.set(length * 1.17, -.23, 0); group.add(seam);
+  }
+  if (data.type === 'grouper') {
+    const jaw = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), mat('#b6a687'));
+    jaw.position.set(length * .91, -.29, 0); jaw.scale.set(.39, .22, .36); group.add(jaw);
+    const mouth = new THREE.Mesh(new THREE.TorusGeometry(.24, .05, 8, 24), mat('#554d45'));
+    mouth.rotation.y = Math.PI / 2; mouth.position.set(length * 1.16, -.19, 0); group.add(mouth);
+  }
+  if (data.type === 'trigger') {
+    const spine = new THREE.Mesh(new THREE.ConeGeometry(.075, .68, 7), mat('#b8bdaf'));
+    spine.position.set(length * .05, height * 1.36, 0); spine.rotation.z = -.2; group.add(spine);
+    const smallerSpine = new THREE.Mesh(new THREE.ConeGeometry(.045, .26, 6), mat('#9eb7ad'));
+    smallerSpine.position.set(-length * .16, height * 1.11, 0); group.add(smallerSpine);
+    const snout = new THREE.Mesh(new THREE.ConeGeometry(.11, .31, 12), mat('#a8b4a2'));
+    snout.rotation.z = -Math.PI / 2; snout.position.set(length + .08, -.13, 0); group.add(snout);
+  }
   const eyeMat = new THREE.MeshStandardMaterial({ color: '#07151c', roughness: .12 });
   const glintMat = new THREE.MeshBasicMaterial({ color: '#ecf6ec' });
   const pectoralFins = [];
   for (const side of [-1, 1]) {
-    const eyeX = length * (data.type === 'butterfly' ? .62 : .58);
-    const eyeY = height * .19;
+    const eyeX = length * (data.type === 'butterfly' ? .62 : data.type === 'grouper' ? .7 : .58);
+    const eyeY = height * (data.type === 'trigger' ? .56 : .19);
     const eyeZ = side * depth * .96;
     if (data.type === 'angelfish') {
       const eyeRing = new THREE.Mesh(new THREE.TorusGeometry(.083, .017, 8, 24), mat('#d3b34e', { side: THREE.DoubleSide }));
       eyeRing.position.set(eyeX, eyeY, eyeZ + side * .014); group.add(eyeRing);
     }
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(.039, 14, 10), eyeMat);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(data.type === 'grouper' ? .06 : .039, 14, 10), eyeMat);
     eye.position.set(eyeX, eyeY, eyeZ + side * .026); group.add(eye);
     const glint = new THREE.Mesh(new THREE.SphereGeometry(.009, 8, 6), glintMat);
     glint.position.set(eyeX + .01, eyeY + .013, eyeZ + side * .061); group.add(glint);
@@ -511,13 +613,14 @@ if (!aquariumAudio.supported) {
   audioButton.title = 'Som indisponível neste navegador';
 }
 
-const particleCount = isTouch ? 170 : 300;
+const particleCount = isTouch ? 210 : 380;
 const particlePositions = new Float32Array(particleCount * 3);
 const particleSpeeds = new Float32Array(particleCount);
 for (let i = 0; i < particleCount; i++) {
-  const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 11.5;
+  const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 17.5;
   particlePositions[i * 3] = Math.cos(angle) * radius;
-  particlePositions[i * 3 + 1] = between(-2, 6.8);
+  const ceiling = domeBase + Math.sqrt(domeRadius ** 2 - (radius + 1) ** 2) * domeHeightScale - .5;
+  particlePositions[i * 3 + 1] = between(-2, ceiling);
   particlePositions[i * 3 + 2] = Math.sin(angle) * radius;
   particleSpeeds[i] = between(.07, .3);
 }
@@ -717,6 +820,18 @@ function fishAt(clientX, clientY) {
   while (object && object.userData.fishIndex === undefined) object = object.parent;
   return object ? fish[object.userData.fishIndex] : null;
 }
+function fishNearAim() {
+  const projected = new THREE.Vector3();
+  let nearestFish = null;
+  let nearestOffset = .19;
+  for (const item of fish) {
+    projected.copy(item.group.position).project(camera);
+    if (projected.z < -1 || projected.z > 1) continue;
+    const offset = Math.hypot(projected.x * camera.aspect, projected.y);
+    if (offset < nearestOffset) { nearestFish = item; nearestOffset = offset; }
+  }
+  return nearestFish;
+}
 function showPhotoToast(message) {
   photoToast.textContent = message;
   photoToast.hidden = false;
@@ -724,10 +839,10 @@ function showPhotoToast(message) {
 }
 function takePhoto() {
   if (!active || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open || photoDialog.open) return;
-  const item = fishAt(innerWidth / 2, innerHeight / 2);
+  const item = fishAt(innerWidth / 2, innerHeight / 2) ?? (isTouch ? fishNearAim() : null);
   if (!item) { showPhotoToast('Mire em um peixe para fotografar'); return; }
   const distance = camera.position.distanceTo(item.group.position);
-  if (distance > 8) { showPhotoToast('Aproxime-se do peixe para fotografar'); return; }
+  if (distance > 10) { showPhotoToast('Aproxime-se do peixe para fotografar'); return; }
   if (distance < 1.2) { showPhotoToast('Afaste-se um pouco para enquadrar o peixe'); return; }
   try {
     photos[item.index] = { image: captureAquariumPhoto(renderer, scene, camera), takenAt: Date.now() };
@@ -949,6 +1064,26 @@ function fishHome(item, distance, time, target, motion) {
       target.y -= near * .68;
       target.z += near * .2;
       break;
+    case 'parrot':
+      target.x += Math.sin(time * .46 + item.phase) * .72 * drift;
+      target.z += Math.cos(time * .46 + item.phase) * .48 * drift;
+      target.y -= Math.max(0, Math.sin(time * 1.1)) * .17 * drift;
+      break;
+    case 'grouper':
+      target.x += Math.sin(time * .22 + item.phase) * .2 * drift;
+      target.z += Math.cos(time * .22 + item.phase) * .16 * drift;
+      target.y += Math.sin(time * .43) * .045 * drift;
+      break;
+    case 'trigger':
+      target.x += Math.sin(time * .7 + item.phase) * .25 * drift;
+      target.y += Math.cos(time * .9 + item.phase) * .14 * drift;
+      target.z -= near * .35;
+      break;
+    case 'seahorse':
+      target.x += Math.sin(time * .43 + item.phase) * .08 * drift;
+      target.y += Math.sin(time * .85 + item.phase) * .13 * drift;
+      target.z += Math.cos(time * .43 + item.phase) * .07 * drift;
+      break;
     default:
       target.x += Math.sin(time * .6 + item.phase) * .52 * drift;
       target.z += Math.cos(time * .6 + item.phase) * .3 * drift;
@@ -991,7 +1126,7 @@ function animate(time) {
     item.velocity.addScaledVector(item.velocity, -Math.min(.99, 3.1 * dt));
     if (active && distance < 3.4 && distance > .01) {
       pushDirection.copy(item.group.position).sub(camera.position).normalize();
-      const response = item.data.type === 'sergeant' ? .47 : item.data.type === 'angelfish' ? 1.15 : .9;
+      const response = item.data.type === 'sergeant' ? .47 : item.data.type === 'angelfish' ? 1.15 : item.data.type === 'grouper' ? .34 : item.data.type === 'seahorse' ? .22 : .9;
       item.velocity.addScaledVector(pushDirection, (3.4 - distance) * response * dt);
     }
     item.group.position.addScaledVector(item.velocity, dt);
@@ -999,8 +1134,8 @@ function animate(time) {
     item.group.rotation.y = item.data.yaw + Math.sin(elapsed * .7 + item.phase) * .13 * motion + item.velocity.x * .09;
     const grazing = item.data.type === 'tang' ? Math.max(0, Math.sin(elapsed * 1.25 + item.phase)) : 0;
     item.group.rotation.z = Math.sin(elapsed * 1.3 + item.phase) * .045 * motion - grazing * .13 * motion;
-    const tailRate = item.data.type === 'butterfly' ? 5.2 : item.data.type === 'porkfish' ? 4.8 : 4;
-    item.tailPivot.rotation.y = Math.sin(elapsed * tailRate + item.phase) * (.2 + Math.min(1, item.velocity.length()) * .12) * motion;
+    const tailRate = item.data.type === 'butterfly' ? 5.2 : item.data.type === 'porkfish' ? 4.8 : item.data.type === 'grouper' ? 2.6 : item.data.type === 'seahorse' ? 1.9 : 4;
+    item.tailPivot.rotation.y = Math.sin(elapsed * tailRate + item.phase) * (item.data.type === 'seahorse' ? .09 : .2 + Math.min(1, item.velocity.length()) * .12) * motion;
     item.pectoralFins.forEach((fin, side) => { fin.rotation.y = (side ? 1 : -1) * (.28 + Math.sin(elapsed * 5 + item.phase) * .18 * motion); });
     item.aura.rotation.z = elapsed * .15 * motion;
     item.aura.material.opacity = pulseAge < 2.5 ? .22 * (1 - pulseAge / 2.5) : 0;
@@ -1020,7 +1155,9 @@ function animate(time) {
     const j = i * 3;
     particlePositions[j + 1] += particleSpeeds[i] * dt * motion;
     particlePositions[j] += Math.sin(elapsed * .7 + i) * dt * .012 * motion;
-    if (particlePositions[j + 1] > 6.8) particlePositions[j + 1] = -2.5;
+    const radius = Math.hypot(particlePositions[j], particlePositions[j + 2]);
+    const ceiling = domeBase + Math.sqrt(Math.max(0, domeRadius ** 2 - (radius + 1) ** 2)) * domeHeightScale - .5;
+    if (particlePositions[j + 1] > ceiling) particlePositions[j + 1] = -2.5;
   }
   particleGeometry.attributes.position.needsUpdate = true;
   pulseAge += dt;

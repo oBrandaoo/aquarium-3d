@@ -1,6 +1,6 @@
 # Aquário Noturno
 
-Experiência submersa em Three.js. Nade dentro de uma redoma de vidro e encontre cinco espécies marinhas presentes no Brasil: sargento, borboleta-listrada, cirurgião-azul, peixe-frade e salema. Os modelos usam silhuetas e padrões de cor próprios de cada espécie. Cada peixe permanece perto de um ponto fixo por uma mola amortecida, com uma rotina de movimento própria e reação à passagem do nadador.
+Experiência submersa em Three.js. Nade dentro de uma redoma de vidro e encontre nove espécies marinhas presentes no Brasil: sargento, borboleta-listrada, cirurgião-azul, peixe-frade, salema, budião-azul, mero, peixe-porco e cavalo-marinho. Os modelos usam silhuetas e padrões de cor próprios de cada espécie. Cada peixe permanece perto de um ponto fixo por uma mola amortecida, com uma rotina de movimento própria e reação à passagem do nadador.
 
 ## Executar
 
