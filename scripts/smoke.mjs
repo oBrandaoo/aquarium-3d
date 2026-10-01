@@ -25,8 +25,16 @@ try {
   await desktop.waitForTimeout(4800);
   await desktop.keyboard.up('w');
   await desktop.waitForTimeout(250);
-  await desktop.screenshot({ path: 'preview-playing.png' });
   assert.ok(Number(await desktop.locator('#foundCount').innerText()) >= 1, 'First fish should be discoverable by swimming near it');
+  assert.equal(await desktop.locator('#speciesDialog').isVisible(), true);
+  assert.equal(await desktop.locator('#speciesScientific').innerText(), 'Abudefduf saxatilis');
+  assert.match(await desktop.locator('#speciesPlace').innerText(), /Litoral brasileiro/);
+  await desktop.screenshot({ path: 'preview-species.png' });
+  await desktop.getByRole('button', { name: 'Fechar ficha' }).click();
+  await desktop.keyboard.press('f');
+  assert.equal(await desktop.locator('#speciesDialog').isVisible(), true);
+  await desktop.getByRole('button', { name: 'Fechar ficha' }).click();
+  await desktop.screenshot({ path: 'preview-playing.png' });
 
   const touch = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   touch.on('pageerror', error => errors.push(error.message));
@@ -37,7 +45,7 @@ try {
   assert.match(await touch.locator('#distanceLabel').innerText(), /Pulso emitido/);
   await touch.screenshot({ path: 'preview-touch.png' });
   assert.deepEqual(errors, []);
-  console.log('Smoke test passed: rendering, start, pulse, swimming discovery, mobile controls.');
+  console.log('Smoke test passed: rendering, start, pulse, swimming discovery, species information, mobile controls.');
 } finally {
   await browser.close();
   await server.close();

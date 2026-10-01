@@ -14,7 +14,7 @@
 
       <header class="topbar">
         <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>Aquário<br><em>Noturno</em></span></div>
-        <div class="top-note">Uma expedição sob a superfície</div>
+        <div class="top-note">Peixes da costa brasileira</div>
         <button class="sound-button" id="helpButton" type="button" aria-label="Abrir instruções">?</button>
       </header>
 
@@ -23,7 +23,7 @@
           <div class="intro-inner">
             <div class="tiny-line"><span class="tiny-dot"></span> A água guarda pequenas luzes</div>
             <h1 id="introTitle">O oceano<br>acorda <em>à noite.</em></h1>
-            <p>Nade entre plantas e partículas brilhantes. Cinco peixes repousam na escuridão — aproxime-se para conhecê-los.</p>
+            <p>Nade entre plantas e partículas brilhantes. Encontre cinco espécies reais do litoral brasileiro e descubra onde vivem.</p>
             <button id="startButton" class="primary-button" type="button"><span>Começar a explorar</span><span class="button-arrow" aria-hidden="true">↗</span></button>
             <div class="intro-controls"><span>W A S D para nadar</span><span>Mouse para olhar</span><span>E para emitir um pulso</span></div>
           </div>
@@ -37,14 +37,21 @@
         </aside>
 
         <div class="crosshair" id="crosshair" aria-hidden="true" hidden><i></i><i></i><i></i><i></i></div>
-        <div class="discovery" id="discovery" role="status" aria-live="polite" hidden>
-          <span class="discovery-kicker">Novo encontro</span>
-          <strong id="discoveryName"></strong>
-          <span id="discoveryDetail"></span>
-        </div>
+        <dialog class="species-dialog" id="speciesDialog" aria-labelledby="speciesName">
+          <button class="dialog-close" id="closeSpecies" aria-label="Fechar ficha" type="button">×</button>
+          <span class="discovery-kicker" id="speciesKicker">Ficha de campo</span>
+          <h2 id="speciesName"></h2>
+          <p class="scientific-name" id="speciesScientific"></p>
+          <dl class="species-facts">
+            <div><dt>Onde encontrar</dt><dd id="speciesPlace"></dd></div>
+            <div><dt>Habitat</dt><dd id="speciesHabitat"></dd></div>
+            <div><dt>Como reconhecer</dt><dd id="speciesTrait"></dd></div>
+          </dl>
+          <a id="speciesSource" href="#" target="_blank" rel="noopener noreferrer">Consultar fonte da espécie ↗</a>
+        </dialog>
 
         <div class="play-footer" id="playFooter" hidden>
-          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span></div>
+          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span> &nbsp; F <span>última ficha</span></div>
           <button class="pulse-button" id="pulseButton" type="button"><span class="pulse-icon" aria-hidden="true"></span> Emitir pulso <kbd>E</kbd></button>
         </div>
 
@@ -57,8 +64,8 @@
           <button class="dialog-close" id="closeHelp" aria-label="Fechar instruções" type="button">×</button>
           <span class="discovery-kicker">Guia da expedição</span>
           <h2 id="helpTitle">Siga as luzes.</h2>
-          <p>Encontre os cinco peixes escondidos pelo aquário. Ao chegar perto de um, ele entra no seu diário.</p>
-          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço para subir, Ctrl para descer e E para emitir um pulso. Clique na água para capturar o mouse.</p>
+          <p>Encontre cinco espécies marinhas do Brasil. Ao chegar perto de um peixe, ele entra no diário; toque no nome para ler sua ficha.</p>
+          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço para subir, Ctrl para descer, E para emitir um pulso e F para rever a última ficha. Clique na água para capturar o mouse.</p>
           <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita da tela para olhar e use as setas para mudar de altura.</p>
           <button class="dialog-action" id="resumeButton" type="button">Voltar à água</button>
         </dialog>

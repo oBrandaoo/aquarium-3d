@@ -8,7 +8,7 @@ const hud = document.querySelector('#hud');
 const list = document.querySelector('#fishList');
 const foundCount = document.querySelector('#foundCount');
 const distanceLabel = document.querySelector('#distanceLabel');
-const discovery = document.querySelector('#discovery');
+const speciesDialog = document.querySelector('#speciesDialog');
 const helpDialog = document.querySelector('#helpDialog');
 const mobileControls = document.querySelector('#mobileControls');
 const playFooter = document.querySelector('#playFooter');
@@ -16,11 +16,11 @@ const crosshair = document.querySelector('#crosshair');
 const isTouch = matchMedia('(pointer: coarse)').matches;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const fishData = [
-  { name: 'Lume', detail: 'Uma pequena lanterna entre as folhas.', color: '#95eee0', accent: '#eaffd5', at: [0, 1.35, 3.5], size: 0.83, yaw: -0.4 },
-  { name: 'Âmbar', detail: 'Sua cauda acende o jardim de corais.', color: '#ffbd80', accent: '#ffe3ab', at: [-8, 0.9, -6], size: 0.94, yaw: 0.8 },
-  { name: 'Nácar', detail: 'Reluz na parte mais funda do aquário.', color: '#b5c9ff', accent: '#f3edff', at: [8.4, 1.8, -7.5], size: 1.06, yaw: 2.6 },
-  { name: 'Íris', detail: 'Mora junto às algas altas.', color: '#dc9eff', accent: '#ffd8ff', at: [-9.2, 3.2, 7.1], size: 0.78, yaw: -1.3 },
-  { name: 'Coral', detail: 'Uma luz quente perto do fundo.', color: '#ff9ca7', accent: '#ffe2c6', at: [9, 0.6, 7.2], size: 0.88, yaw: 1.8 },
+  { name: 'Sargento', short: 'Sargento', scientific: 'Abudefduf saxatilis', place: 'Litoral brasileiro e ilhas oceânicas', habitat: 'Recifes rasos, costões rochosos e áreas próximas à areia.', trait: 'Corpo prateado com dorso amarelado e cinco barras pretas.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sergeant-major/', color: '#e7d786', accent: '#c8c786', type: 'sergeant', body: [.79, .55, .23], at: [0, 1.35, 3.5], size: .91, yaw: -.4 },
+  { name: 'Borboleta-listrada', short: 'Borboleta', scientific: 'Chaetodon striatus', place: 'Litoral até o Sudeste e ilhas oceânicas brasileiras', habitat: 'Recifes de coral e costões rochosos.', trait: 'Corpo alto e fino, bege, com quatro barras pretas e estrias delicadas.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#e9ddad', accent: '#e9d89a', type: 'butterfly', body: [.66, .72, .17], at: [-8, .9, -6], size: .84, yaw: .8 },
+  { name: 'Cirurgião-azul', short: 'Cirurgião', scientific: 'Acanthurus coeruleus', place: 'Costa brasileira até São Paulo e ilhas oceânicas', habitat: 'Recifes e áreas rochosas onde pasta algas.', trait: 'Adulto azul intenso, corpo achatado e espinho claro na base da cauda.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#2876c7', accent: '#1b4d96', type: 'tang', body: [.9, .53, .19], at: [8.4, 1.8, -7.5], size: 1.02, yaw: 2.6 },
+  { name: 'Peixe-frade', short: 'Frade', scientific: 'Pomacanthus paru', place: 'Recifes e costões do litoral brasileiro', habitat: 'Áreas recifais com fendas e abrigo entre corais.', trait: 'Corpo escuro com bordas douradas nas escamas e nadadeiras altas.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/french-angelfish/', color: '#c9aa5a', accent: '#bca04d', type: 'angelfish', body: [.71, .72, .18], at: [-9.2, 3.2, 7.1], size: .95, yaw: -1.3 },
+  { name: 'Salema', short: 'Salema', scientific: 'Anisotremus virginicus', place: 'Litoral brasileiro, inclusive Sergipe e Santa Catarina', habitat: 'Fundos rochosos e coralinos do litoral.', trait: 'Corpo prateado com faixas amarelas horizontais e duas barras pretas na cabeça.', source: 'https://faep.eng.br/arquivos/ebooks/catalogo_de_pescados_de_sergipe_e_adjacencias.pdf', color: '#e9d895', accent: '#f2c951', type: 'porkfish', body: [.91, .49, .22], at: [9, .6, 7.2], size: .94, yaw: 1.8 },
 ];
 
 let seed = 62754;
@@ -191,49 +191,170 @@ function glowTexture() {
   return new THREE.CanvasTexture(c);
 }
 const glowMap = glowTexture();
+const fishPalette = {
+  ink: new THREE.Color('#172b35'),
+  cream: new THREE.Color('#e8e2c9'),
+  silver: new THREE.Color('#b8c9c8'),
+  yellow: new THREE.Color('#dfcb73'),
+  blue: new THREE.Color('#1768b4'),
+  deepBlue: new THREE.Color('#15417c'),
+  charcoal: new THREE.Color('#1b2c37'),
+  gold: new THREE.Color('#d5b353'),
+};
+function bodyColor(type, x, y) {
+  const { ink, cream, silver, yellow, blue, deepBlue, charcoal, gold } = fishPalette;
+  const color = new THREE.Color();
+  if (type === 'sergeant') {
+    color.copy(silver).lerp(yellow, THREE.MathUtils.smoothstep(y, -.25, .7) * .82);
+    if (x > .48) color.lerp(new THREE.Color('#8eb9b6'), (x - .48) * .5);
+    const band = Math.min(...[-.72, -.39, -.06, .26, .56].map(center => Math.abs(x + y * y * .028 - center)));
+    color.lerp(ink, 1 - THREE.MathUtils.smoothstep(band, .053, .075));
+  } else if (type === 'butterfly') {
+    color.copy(cream).lerp(yellow, .24 + Math.max(0, y) * .14);
+    if (Math.sin(y * 47 + x * 5) > .91) color.lerp(ink, .27);
+    const band = Math.min(...[-.63, -.23, .18, .63].map(center => Math.abs(x - center)));
+    color.lerp(ink, 1 - THREE.MathUtils.smoothstep(band, .062, .085));
+  } else if (type === 'tang') {
+    color.copy(blue).lerp(deepBlue, THREE.MathUtils.smoothstep(y, -.4, .8) * .48);
+    if (Math.sin(y * 24 + x * 2) > .985) color.lerp(cream, .08);
+  } else if (type === 'angelfish') {
+    color.copy(charcoal);
+    if (x > .52) color.lerp(new THREE.Color('#54717b'), (x - .52) * .74);
+    const row = (y + 1) * 10;
+    const col = (x + 1) * 10 + Math.floor(row) * .5;
+    if (x < .49 && x > -.8 && Math.abs(row % 1 - .48) < .16 && Math.abs(col % 1 - .5) < .35) color.lerp(gold, .9);
+  } else {
+    color.copy(silver).lerp(cream, .45);
+    if (Math.sin((y + .79) * 37) > .68) color.lerp(yellow, .92);
+    const band = Math.min(Math.abs(x - .37), Math.abs(x - .68));
+    color.lerp(ink, 1 - THREE.MathUtils.smoothstep(band, .06, .08));
+  }
+  return color;
+}
+const bodyTextures = new Map();
+function bodyTexture(type) {
+  if (bodyTextures.has(type)) return bodyTextures.get(type);
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(canvas.width, canvas.height);
+  for (let row = 0; row < canvas.height; row++) {
+    const theta = row / (canvas.height - 1) * Math.PI;
+    const y = Math.cos(theta);
+    const ring = Math.sin(theta);
+    for (let col = 0; col < canvas.width; col++) {
+      const x = -Math.cos(col / (canvas.width - 1) * Math.PI * 2) * ring;
+      const color = bodyColor(type, x, y).convertLinearToSRGB();
+      const at = (row * canvas.width + col) * 4;
+      image.data[at] = Math.round(color.r * 255);
+      image.data[at + 1] = Math.round(color.g * 255);
+      image.data[at + 2] = Math.round(color.b * 255);
+      image.data[at + 3] = 255;
+    }
+  }
+  ctx.putImageData(image, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  bodyTextures.set(type, texture);
+  return texture;
+}
+function makeBody(data) {
+  const geometry = new THREE.SphereGeometry(1, 48, 32);
+  const positions = geometry.attributes.position;
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i);
+    const head = THREE.MathUtils.smoothstep(x, .08, 1);
+    const tail = THREE.MathUtils.smoothstep(-x, .42, 1);
+    positions.setXYZ(i, x + head * .07, positions.getY(i) * (1 - head * .34 - tail * .12), positions.getZ(i) * (1 - head * .26 - tail * .19));
+  }
+  geometry.computeVertexNormals();
+  const body = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ map: bodyTexture(data.type), roughness: .72, metalness: .02 }));
+  body.scale.set(...data.body);
+  return body;
+}
 function createFish(data, index) {
   const anchor = new THREE.Vector3(...data.at);
   const group = new THREE.Group();
   group.position.copy(anchor);
   group.rotation.y = data.yaw;
   group.scale.setScalar(data.size);
-  const bodyMat = mat(data.color, { roughness: .36, metalness: .14, emissive: data.color, emissiveIntensity: .38 });
-  const finMat = mat(data.accent, { roughness: .4, side: THREE.DoubleSide, emissive: data.color, emissiveIntensity: .85 });
-  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), bodyMat);
-  body.scale.set(.85, .48, .34);
-  group.add(body);
-  const snout = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), bodyMat);
-  snout.position.x = .7; snout.scale.set(.24, .21, .24); group.add(snout);
-  const tailPivot = new THREE.Group(); tailPivot.position.x = -.73;
+  const finMat = mat(data.accent, { roughness: .68, side: THREE.DoubleSide, transparent: true, opacity: .91 });
+  group.add(makeBody(data));
+  const [length, height, depth] = data.body;
+  const tailPivot = new THREE.Group(); tailPivot.position.x = -length * .92;
+  const peduncle = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), mat(data.color));
+  peduncle.position.x = -.06; peduncle.scale.set(.25, .11, .11); tailPivot.add(peduncle);
   const tailShape = new THREE.Shape();
-  tailShape.moveTo(0, 0); tailShape.lineTo(-.82, .48); tailShape.quadraticCurveTo(-.6, 0, -.82, -.48); tailShape.closePath();
-  const tail = new THREE.Mesh(new THREE.ExtrudeGeometry(tailShape, { depth: .045, bevelEnabled: true, bevelThickness: .035, bevelSize: .03, bevelSegments: 1 }), finMat);
-  tail.position.z = -.02; tailPivot.add(tail); group.add(tailPivot);
+  const roundedTail = data.type === 'angelfish' || data.type === 'butterfly';
+  tailShape.moveTo(-.11, 0);
+  tailShape.bezierCurveTo(-.28, .05, roundedTail ? -.48 : -.48, roundedTail ? .29 : .41, roundedTail ? -.56 : -.71, roundedTail ? .29 : .38);
+  tailShape.quadraticCurveTo(roundedTail ? -.7 : -.46, 0, roundedTail ? -.56 : -.71, roundedTail ? -.29 : -.38);
+  tailShape.bezierCurveTo(roundedTail ? -.48 : -.48, roundedTail ? -.29 : -.41, -.28, -.05, -.11, 0);
+  tailShape.closePath();
+  const tail = new THREE.Mesh(new THREE.ExtrudeGeometry(tailShape, { depth: .025, bevelEnabled: true, bevelThickness: .015, bevelSize: .017, bevelSegments: 1 }), finMat);
+  tail.position.z = -.013; tailPivot.add(tail); group.add(tailPivot);
   const dorsalShape = new THREE.Shape();
-  dorsalShape.moveTo(-.42, .28); dorsalShape.quadraticCurveTo(-.22, .94, .27, .42); dorsalShape.quadraticCurveTo(-.05, .48, -.42, .28);
+  const tallFin = data.type === 'angelfish' || data.type === 'butterfly';
+  dorsalShape.moveTo(-length * .77, height * .52);
+  dorsalShape.quadraticCurveTo(-length * .78, height * (tallFin ? 1.42 : 1.15), -length * .36, height * (tallFin ? 1.32 : 1.1));
+  dorsalShape.quadraticCurveTo(length * .22, height * (tallFin ? 1.16 : 1.02), length * .7, height * .48);
+  dorsalShape.closePath();
   const dorsal = new THREE.Mesh(new THREE.ShapeGeometry(dorsalShape), finMat);
   dorsal.position.z = .015; group.add(dorsal);
-  const lowerFin = new THREE.Mesh(new THREE.ConeGeometry(.25, .55, 3), finMat);
-  lowerFin.position.set(-.06, -.4, 0); lowerFin.rotation.z = Math.PI; lowerFin.scale.z = .3; group.add(lowerFin);
-  const eyeMat = new THREE.MeshBasicMaterial({ color: '#102332' });
-  const glintMat = new THREE.MeshBasicMaterial({ color: '#fffdf2' });
-  for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(.072, 12, 8), eyeMat);
-    eye.position.set(.52, .12, side * .29); group.add(eye);
-    const glint = new THREE.Mesh(new THREE.SphereGeometry(.022, 8, 6), glintMat);
-    glint.position.set(.542, .143, side * .351); group.add(glint);
-    const sideFin = new THREE.Mesh(new THREE.ConeGeometry(.16, .42, 3), finMat);
-    sideFin.position.set(-.28, -.09, side * .31);
-    sideFin.rotation.set(side * .4, 0, -1.1); group.add(sideFin);
+  const anal = new THREE.Mesh(new THREE.ShapeGeometry(dorsalShape), finMat);
+  anal.scale.y = -.69; anal.position.y = -.04; anal.position.z = -.015; group.add(anal);
+  if (data.type === 'butterfly') {
+    const snout = new THREE.Mesh(new THREE.ConeGeometry(.105, .38, 16), mat('#e8ddbd'));
+    snout.rotation.z = -Math.PI / 2; snout.position.set(length + .1, -.12, 0); group.add(snout);
   }
-  const light = new THREE.PointLight(data.color, 4.8, 4.5, 2);
+  if (data.type === 'angelfish') {
+    const mouth = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), mat('#d3d6c9'));
+    mouth.position.set(length * .98, -.18, 0); mouth.scale.set(.11, .09, .11); group.add(mouth);
+  }
+  const eyeMat = new THREE.MeshStandardMaterial({ color: '#07151c', roughness: .12 });
+  const glintMat = new THREE.MeshBasicMaterial({ color: '#ecf6ec' });
+  const pectoralFins = [];
+  for (const side of [-1, 1]) {
+    const eyeX = length * (data.type === 'butterfly' ? .62 : .58);
+    const eyeY = height * .19;
+    const eyeZ = side * depth * .96;
+    if (data.type === 'angelfish') {
+      const eyeRing = new THREE.Mesh(new THREE.TorusGeometry(.083, .017, 8, 24), mat('#d3b34e', { side: THREE.DoubleSide }));
+      eyeRing.position.set(eyeX, eyeY, eyeZ + side * .014); group.add(eyeRing);
+    }
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.039, 14, 10), eyeMat);
+    eye.position.set(eyeX, eyeY, eyeZ + side * .026); group.add(eye);
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(.009, 8, 6), glintMat);
+    glint.position.set(eyeX + .01, eyeY + .013, eyeZ + side * .061); group.add(glint);
+    const gillPoints = [];
+    for (let g = 0; g <= 12; g++) {
+      const yy = height * (.32 - g / 12 * .77);
+      const xx = length * (.3 + Math.sin(g / 12 * Math.PI) * .055);
+      const zz = depth * Math.sqrt(Math.max(.08, 1 - (xx / length) ** 2 - (yy / height) ** 2));
+      gillPoints.push(new THREE.Vector3(xx, yy, side * (zz + .012)));
+    }
+    const gill = new THREE.Line(new THREE.BufferGeometry().setFromPoints(gillPoints), new THREE.LineBasicMaterial({ color: '#43545a', transparent: true, opacity: .48 }));
+    group.add(gill);
+    const finShape = new THREE.Shape();
+    finShape.moveTo(0, 0); finShape.quadraticCurveTo(-.18, .02, -.34, -.16); finShape.quadraticCurveTo(-.1, -.28, 0, 0);
+    const pectoral = new THREE.Mesh(new THREE.ShapeGeometry(finShape), finMat);
+    pectoral.position.set(.02, -.08, side * depth * .96);
+    pectoral.rotation.y = side * .28; group.add(pectoral); pectoralFins.push(pectoral);
+    if (data.type === 'tang') {
+      const spine = new THREE.Mesh(new THREE.ConeGeometry(.04, .18, 5), mat('#d7dcc7'));
+      spine.rotation.z = Math.PI / 2;
+      spine.position.set(-length * 1.04, .06, side * .13); group.add(spine);
+    }
+  }
+  const light = new THREE.PointLight('#b4dfdf', 2.1, 3.5, 2);
   group.add(light);
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowMap, color: data.color, transparent: true, opacity: .17, depthWrite: false, blending: THREE.AdditiveBlending }));
-  glow.scale.set(3.5, 3.5, 1); group.add(glow);
-  const aura = new THREE.Mesh(new THREE.TorusGeometry(1.05, .009, 4, 64), new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: .28, depthWrite: false }));
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowMap, color: data.color, transparent: true, opacity: .06, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glow.scale.set(3.1, 3.1, 1); group.add(glow);
+  const aura = new THREE.Mesh(new THREE.TorusGeometry(1.02, .007, 4, 64), new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0, depthWrite: false }));
   aura.rotation.y = Math.PI / 2; group.add(aura);
   scene.add(group);
-  return { data, index, group, anchor, velocity: new THREE.Vector3(), tailPivot, aura, glow, phase: index * 1.37, found: false };
+  return { data, index, group, anchor, velocity: new THREE.Vector3(), tailPivot, pectoralFins, aura, glow, phase: index * 1.37, found: false };
 }
 const fish = fishData.map(createFish);
 
@@ -256,12 +377,12 @@ pulse.rotation.x = -Math.PI / 2;
 scene.add(pulse);
 let pulseAge = 100;
 
-list.innerHTML = fishData.map((item, i) => `<div class="fish-row" id="fish-${i}" style="--fish-color:${item.color}"><span class="fish-symbol">✳</span><span>${item.name}</span><small>por encontrar</small></div>`).join('');
+list.innerHTML = fishData.map((item, i) => `<button class="fish-row" id="fish-${i}" data-fish="${i}" style="--fish-color:${item.color}" type="button" aria-label="${item.name}: por encontrar" disabled><span class="fish-symbol">✳</span><span>${item.short}</span><small>por encontrar</small></button>`).join('');
 let active = false;
 let lastTime = performance.now();
 let elapsed = 0;
 let foundTotal = 0;
-let discoveryTimer;
+let lastFound = null;
 let nearest = null;
 const pressed = new Set();
 const stick = { x: 0, y: 0, pointer: null };
@@ -286,22 +407,28 @@ function emitPulse() {
   pulse.position.copy(camera.position);
   distanceLabel.textContent = 'Pulso emitido — siga os brilhos';
 }
-function showDiscovery(item) {
-  clearTimeout(discoveryTimer);
-  document.querySelector('#discoveryName').textContent = item.data.name;
-  document.querySelector('#discoveryDetail').textContent = item.data.detail;
-  discovery.hidden = false;
-  discoveryTimer = setTimeout(() => { discovery.hidden = true; }, 4200);
+function openSpecies(item, justFound = false) {
+  document.exitPointerLock?.();
+  document.querySelector('#speciesKicker').textContent = justFound ? 'Nova espécie encontrada' : 'Ficha de campo';
+  document.querySelector('#speciesName').textContent = item.data.name;
+  document.querySelector('#speciesScientific').textContent = item.data.scientific;
+  document.querySelector('#speciesPlace').textContent = item.data.place;
+  document.querySelector('#speciesHabitat').textContent = item.data.habitat;
+  document.querySelector('#speciesTrait').textContent = item.data.trait;
+  document.querySelector('#speciesSource').href = item.data.source;
+  speciesDialog.showModal();
 }
 function discover(item) {
   if (item.found) return;
   item.found = true;
+  lastFound = item;
   foundTotal++;
   foundCount.textContent = foundTotal;
   const row = document.querySelector(`#fish-${item.index}`);
-  row.classList.add('found'); row.querySelector('small').textContent = 'encontrado';
-  item.aura.material.opacity = .65;
-  showDiscovery(item);
+  row.classList.add('found'); row.disabled = false;
+  row.setAttribute('aria-label', `${item.data.name}: abrir ficha`);
+  row.querySelector('small').textContent = 'ver ficha';
+  openSpecies(item, true);
   if (foundTotal === fish.length) {
     distanceLabel.textContent = 'Todos encontrados — o aquário é seu para explorar';
   }
@@ -309,6 +436,15 @@ function discover(item) {
 document.querySelector('#startButton').addEventListener('click', start);
 document.querySelector('#pulseButton').addEventListener('click', emitPulse);
 document.querySelector('#mobilePulse').addEventListener('click', emitPulse);
+list.addEventListener('click', e => {
+  const row = e.target.closest('button[data-fish]');
+  if (row && !row.disabled) openSpecies(fish[Number(row.dataset.fish)]);
+});
+document.querySelector('#closeSpecies').addEventListener('click', () => {
+  speciesDialog.close();
+  if (active && !isTouch) canvas.requestPointerLock?.();
+});
+speciesDialog.addEventListener('click', e => { if (e.target === speciesDialog) speciesDialog.close(); });
 document.querySelector('#helpButton').addEventListener('click', () => { document.exitPointerLock?.(); helpDialog.showModal(); });
 document.querySelector('#closeHelp').addEventListener('click', () => helpDialog.close());
 document.querySelector('#resumeButton').addEventListener('click', () => { helpDialog.close(); if (active && !isTouch) canvas.requestPointerLock?.(); });
@@ -316,11 +452,12 @@ helpDialog.addEventListener('click', e => { if (e.target === helpDialog) helpDia
 canvas.addEventListener('click', () => { if (active && !isTouch && document.pointerLockElement !== canvas) canvas.requestPointerLock?.(); });
 document.addEventListener('mousemove', e => { if (active && document.pointerLockElement === canvas && !helpDialog.open) look(e.movementX, e.movementY); });
 document.addEventListener('keydown', e => {
-  if (helpDialog.open) return;
+  if (helpDialog.open || speciesDialog.open) return;
   const key = e.key.toLowerCase();
-  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e'].includes(key)) e.preventDefault();
+  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e', 'f'].includes(key)) e.preventDefault();
   pressed.add(key);
   if (key === 'e' && !e.repeat) emitPulse();
+  if (key === 'f' && !e.repeat && lastFound) openSpecies(lastFound);
 });
 document.addEventListener('keyup', e => pressed.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => pressed.clear());
@@ -364,7 +501,7 @@ window.addEventListener('resize', () => {
 });
 
 function updatePlayer(dt) {
-  if (!active || helpDialog.open) return;
+  if (!active || helpDialog.open || speciesDialog.open) return;
   const forward = (pressed.has('w') || pressed.has('arrowup') ? 1 : 0) - (pressed.has('s') || pressed.has('arrowdown') ? 1 : 0) - stick.y;
   const side = (pressed.has('d') || pressed.has('arrowright') ? 1 : 0) - (pressed.has('a') || pressed.has('arrowleft') ? 1 : 0) + stick.x;
   const up = (pressed.has(' ') || verticalButtons.up ? 1 : 0) - (pressed.has('control') || verticalButtons.down ? 1 : 0);
@@ -408,8 +545,10 @@ function animate(time) {
     item.group.rotation.y = item.data.yaw + Math.sin(elapsed * .7 + item.phase) * .13 * motion + item.velocity.x * .09;
     item.group.rotation.z = Math.sin(elapsed * 1.3 + item.phase) * .045 * motion;
     item.tailPivot.rotation.y = Math.sin(elapsed * 4 + item.phase) * .23 * motion;
+    item.pectoralFins.forEach((fin, side) => { fin.rotation.y = (side ? 1 : -1) * (.28 + Math.sin(elapsed * 5 + item.phase) * .18 * motion); });
     item.aura.rotation.z = elapsed * .15 * motion;
-    item.glow.material.opacity = .16 + (pulseAge < 2.5 ? .28 * (1 - pulseAge / 2.5) : 0);
+    item.aura.material.opacity = pulseAge < 2.5 ? .22 * (1 - pulseAge / 2.5) : 0;
+    item.glow.material.opacity = .06 + (pulseAge < 2.5 ? .2 * (1 - pulseAge / 2.5) : 0);
   }
   if (active && foundTotal !== fish.length && nearest && pulseAge > 4) {
     distanceLabel.textContent = nearestDistance < 5 ? `Uma luz está a ${Math.ceil(nearestDistance)} m` : 'Explore a água';
@@ -438,5 +577,6 @@ window.addEventListener('beforeunload', () => {
     materials.forEach(material => material.dispose());
   });
   glowMap.dispose();
+  bodyTextures.forEach(texture => texture.dispose());
   renderer.dispose();
 });
