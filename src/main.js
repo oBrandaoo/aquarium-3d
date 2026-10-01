@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { cameraRelativeDirection } from './movement.js';
+import { createAquariumAudio } from './ambientAudio.js';
 import './style.css';
 
 const canvas = document.querySelector('#ocean');
@@ -16,6 +17,10 @@ const journalEntries = document.querySelector('#journalEntries');
 const sonarReadout = document.querySelector('#sonarReadout');
 const sonarArrow = document.querySelector('#sonarArrow');
 const sonarText = document.querySelector('#sonarText');
+const glassNotice = document.querySelector('#glassNotice');
+const poiPrompt = document.querySelector('#poiPrompt');
+const poiDialog = document.querySelector('#poiDialog');
+const audioButton = document.querySelector('#audioButton');
 const helpDialog = document.querySelector('#helpDialog');
 const mobileControls = document.querySelector('#mobileControls');
 const playFooter = document.querySelector('#playFooter');
@@ -23,11 +28,16 @@ const crosshair = document.querySelector('#crosshair');
 const isTouch = matchMedia('(pointer: coarse)').matches;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const fishData = [
-  { name: 'Sargento', short: 'Sargento', scientific: 'Abudefduf saxatilis', place: 'Litoral brasileiro e ilhas oceânicas', habitat: 'Recifes rasos, costões rochosos e áreas próximas à areia.', trait: 'Corpo prateado com dorso amarelado e cinco barras pretas.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sergeant-major/', color: '#e7d786', accent: '#c8c786', type: 'sergeant', body: [.79, .55, .23], at: [0, 1.35, 3.5], size: .91, yaw: -.4 },
-  { name: 'Borboleta-listrada', short: 'Borboleta', scientific: 'Chaetodon striatus', place: 'Litoral até o Sudeste e ilhas oceânicas brasileiras', habitat: 'Recifes de coral e costões rochosos.', trait: 'Corpo alto e fino, bege, com quatro barras pretas e estrias delicadas.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#e9ddad', accent: '#e9d89a', type: 'butterfly', body: [.66, .72, .17], at: [-8, .9, -6], size: .84, yaw: .8 },
-  { name: 'Cirurgião-azul', short: 'Cirurgião', scientific: 'Acanthurus coeruleus', place: 'Costa brasileira até São Paulo e ilhas oceânicas', habitat: 'Recifes e áreas rochosas onde pasta algas.', trait: 'Adulto azul intenso, corpo achatado e espinho claro na base da cauda.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#2876c7', accent: '#1b4d96', type: 'tang', body: [.9, .53, .19], at: [8.4, 1.8, -7.5], size: 1.02, yaw: 2.6 },
-  { name: 'Peixe-frade', short: 'Frade', scientific: 'Pomacanthus paru', place: 'Recifes e costões do litoral brasileiro', habitat: 'Áreas recifais com fendas e abrigo entre corais.', trait: 'Corpo escuro com bordas douradas nas escamas e nadadeiras altas.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/french-angelfish/', color: '#c9aa5a', accent: '#bca04d', type: 'angelfish', body: [.71, .72, .18], at: [-9.2, 3.2, 7.1], size: .95, yaw: -1.3 },
-  { name: 'Salema', short: 'Salema', scientific: 'Anisotremus virginicus', place: 'Litoral brasileiro, inclusive Sergipe e Santa Catarina', habitat: 'Fundos rochosos e coralinos do litoral.', trait: 'Corpo prateado com faixas amarelas horizontais e duas barras pretas na cabeça.', source: 'https://faep.eng.br/arquivos/ebooks/catalogo_de_pescados_de_sergipe_e_adjacencias.pdf', color: '#e9d895', accent: '#f2c951', type: 'porkfish', body: [.91, .49, .22], at: [9, .6, 7.2], size: .94, yaw: 1.8 },
+  { name: 'Sargento', short: 'Sargento', scientific: 'Abudefduf saxatilis', place: 'Litoral brasileiro e ilhas oceânicas', habitat: 'Recifes rasos, costões rochosos e áreas próximas à areia.', trait: 'Corpo prateado com dorso amarelado e cinco barras pretas.', behavior: 'Patrulha lentamente uma faixa do recife e acelera a cauda quando você se aproxima.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sergeant-major/', color: '#e7d786', accent: '#c8c786', type: 'sergeant', body: [.79, .55, .23], at: [0, 1.35, 3.5], size: .91, yaw: -.4 },
+  { name: 'Borboleta-listrada', short: 'Borboleta', scientific: 'Chaetodon striatus', place: 'Litoral até o Sudeste e ilhas oceânicas brasileiras', habitat: 'Recifes de coral e costões rochosos.', trait: 'Corpo alto e fino, bege, com quatro barras pretas e estrias delicadas.', behavior: 'Fica perto dos corais e recua para um abrigo ao perceber um nadador.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#e9ddad', accent: '#e9d89a', type: 'butterfly', body: [.66, .72, .17], at: [-8, .9, -6], size: .84, yaw: .8 },
+  { name: 'Cirurgião-azul', short: 'Cirurgião', scientific: 'Acanthurus coeruleus', place: 'Costa brasileira até São Paulo e ilhas oceânicas', habitat: 'Recifes e áreas rochosas onde pasta algas.', trait: 'Adulto azul intenso, corpo achatado e espinho claro na base da cauda.', behavior: 'Passeia entre manchas de algas e inclina a cabeça como se estivesse pastando.', source: 'https://www.gov.br/ibama/pt-br/phocadownload/peixesornamentais/2008/guia-para-identificao-de-peixes-ornamentais-marinhos-ibama.pdf', color: '#2876c7', accent: '#1b4d96', type: 'tang', body: [.9, .53, .19], at: [8.4, 1.8, -7.5], size: 1.02, yaw: 2.6 },
+  { name: 'Peixe-frade', short: 'Frade', scientific: 'Pomacanthus paru', place: 'Recifes e costões do litoral brasileiro', habitat: 'Áreas recifais com fendas e abrigo entre corais.', trait: 'Corpo escuro com bordas douradas nas escamas e nadadeiras altas.', behavior: 'Desliza entre rochas e desce para a sombra quando alguém chega perto.', source: 'https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/french-angelfish/', color: '#c9aa5a', accent: '#bca04d', type: 'angelfish', body: [.71, .72, .18], at: [-9.2, 3.2, 7.1], size: .95, yaw: -1.3 },
+  { name: 'Salema', short: 'Salema', scientific: 'Anisotremus virginicus', place: 'Litoral brasileiro, inclusive Sergipe e Santa Catarina', habitat: 'Fundos rochosos e coralinos do litoral.', trait: 'Corpo prateado com faixas amarelas horizontais e duas barras pretas na cabeça.', behavior: 'Cruza a borda rochosa em pequenos trajetos e vira antes de se afastar demais.', source: 'https://faep.eng.br/arquivos/ebooks/catalogo_de_pescados_de_sergipe_e_adjacencias.pdf', color: '#e9d895', accent: '#f2c951', type: 'porkfish', body: [.91, .49, .22], at: [9, .6, 7.2], size: .94, yaw: 1.8 },
+];
+const habitatData = [
+  { title: 'Chapeirões de Abrolhos', region: 'Banco dos Abrolhos · Bahia', kind: 'Recife de coral', description: 'O Parque Nacional Marinho dos Abrolhos protege parte do maior complexo recifal do Atlântico Sul. Os chapeirões são formações características da região e oferecem espaço para muitos peixes recifais.', source: 'https://www.gov.br/icmbio/pt-br/assuntos/unidade-de-conservacao/unidades-de-biomas/marinho/lista-de-ucs/parna-marinho-dos-abrolhos/pesquisa-e-monitoramento/pesquisa-e-monitoramento', color: '#d791a0', at: [-2.7, -2.35, 7.9], type: 'coral' },
+  { title: 'Costão rochoso', region: 'Litoral brasileiro', kind: 'Rochas submersas', description: 'Nos costões, rochas firmes servem de superfície para algas e invertebrados. A parte submersa reúne uma grande variedade de animais marinhos e pequenos refúgios entre as fendas.', source: 'https://www.gov.br/icmbio/pt-br/centrais-de-conteudo/manualecossistemasmarinhosecosteiros3-pdf', color: '#a4b8cd', at: [8.7, -2.35, 9.2], type: 'rock' },
+  { title: 'Costa das Algas', region: 'Serra, Fundão e Aracruz · Espírito Santo', kind: 'Bancos de algas', description: 'A APA Costa das Algas protege um mosaico de recifes e costões rochosos, com bancos e pradarias de algas marinhas. Esse fundo variado sustenta diferentes formas de vida costeira.', source: 'https://www.gov.br/icmbio/pt-br/assuntos/unidade-de-conservacao/unidades-de-biomas/marinho/lista-de-ucs/apa-costa-das-algas/area-protegida-2013-saiba-mais-sobre-a-apa/sobre-a-unidade-de-conservacao-uc-federal-area-de-protecao-ambiental-apa-costa-das-algas', color: '#8bd5aa', at: [8.2, -2.35, -6.9], type: 'algae' },
 ];
 
 let seed = 62754;
@@ -61,6 +71,7 @@ const playerVelocity = new THREE.Vector3();
 const playerDirection = new THREE.Vector3();
 const targetVelocity = new THREE.Vector3();
 const tmp = new THREE.Vector3();
+const pushDirection = new THREE.Vector3();
 
 scene.add(new THREE.HemisphereLight('#8ad7e8', '#102234', 2.15));
 const moon = new THREE.DirectionalLight('#9dddeb', 2.9);
@@ -83,9 +94,9 @@ const dome = new THREE.Mesh(
   new THREE.SphereGeometry(domeRadius, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2),
   new THREE.ShaderMaterial({
     side: THREE.BackSide, transparent: true, depthWrite: false,
-    uniforms: { glassColor: { value: new THREE.Color('#60b7c6') } },
+    uniforms: { glassColor: { value: new THREE.Color('#60b7c6') }, proximity: { value: 0 } },
     vertexShader: 'varying vec3 vNormal; varying vec3 vEye; void main(){ vec4 world = modelMatrix * vec4(position,1.0); vNormal = normalize(mat3(modelMatrix) * normal); vEye = normalize(cameraPosition - world.xyz); gl_Position = projectionMatrix * viewMatrix * world; }',
-    fragmentShader: 'uniform vec3 glassColor; varying vec3 vNormal; varying vec3 vEye; void main(){ float edge = pow(1.0 - abs(dot(normalize(vNormal), normalize(vEye))), 2.0); gl_FragColor = vec4(glassColor, 0.035 + edge * 0.22); }',
+    fragmentShader: 'uniform vec3 glassColor; uniform float proximity; varying vec3 vNormal; varying vec3 vEye; void main(){ vec3 normal = normalize(vNormal); vec3 eye = normalize(vEye); float edge = pow(1.0 - abs(dot(normal, eye)), 2.0); float reflection = pow(max(dot(reflect(-eye, normal), normalize(vec3(-0.4, 0.8, 0.3))), 0.0), 10.0); gl_FragColor = vec4(glassColor + vec3(0.2, 0.34, 0.32) * reflection, 0.035 + edge * 0.22 + reflection * 0.11 + proximity * 0.075); }',
   }),
 );
 dome.position.y = domeBase;
@@ -120,6 +131,22 @@ const domeRim = new THREE.Mesh(new THREE.TorusGeometry(domeRadius - .1, .07, 8, 
 domeRim.rotation.x = Math.PI / 2;
 domeRim.position.y = domeBase + .08;
 scene.add(domeRim);
+const glassRipple = new THREE.Mesh(
+  new THREE.RingGeometry(.85, 1, 64),
+  new THREE.MeshBasicMaterial({ color: '#c2f9ed', transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+);
+glassRipple.visible = false;
+glassRipple.renderOrder = 6;
+scene.add(glassRipple);
+const glassNormal = new THREE.Vector3();
+const glassAxis = new THREE.Vector3(0, 0, 1);
+let glassRippleAge = 100;
+let glassNoticeAge = 100;
+let touchingGlass = false;
+function domeInteriorRadiusAt(y) {
+  const normalizedHeight = (y - domeBase) / domeHeightScale;
+  return Math.sqrt(Math.max(0, domeRadius ** 2 - normalizedHeight ** 2)) - .72;
+}
 
 // A low, uneven seabed leaves plenty of room to swim while hiding the tank edge in fog.
 const groundGeometry = new THREE.PlaneGeometry(42, 42, 80, 80);
@@ -427,6 +454,56 @@ function createFish(data, index) {
 }
 const fish = fishData.map(createFish);
 
+const habitatPoints = habitatData.map((data, index) => {
+  const group = new THREE.Group();
+  group.position.set(...data.at);
+  const markerMaterial = mat(data.color, { emissive: data.color, emissiveIntensity: 1.7, metalness: .18, roughness: .3 });
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(.28, .38, .12, 8), mat('#214556', { metalness: .25 }));
+  foot.position.y = .08; group.add(foot);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(.026, .045, 1.93, 6), mat('#72aab0', { emissive: '#277b83', emissiveIntensity: .65 }));
+  stem.position.y = 1.08; group.add(stem);
+  const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(.19), markerMaterial);
+  beacon.position.y = 2.13; group.add(beacon);
+  const halo = new THREE.Mesh(new THREE.TorusGeometry(.43, .014, 6, 40), new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: .66, depthWrite: false }));
+  halo.rotation.x = Math.PI / 2;
+  halo.position.y = 2.13; group.add(halo);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowMap, color: data.color, transparent: true, opacity: .3, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glow.position.y = 2.13; glow.scale.set(2.5, 2.5, 1); group.add(glow);
+  scene.add(group);
+  if (data.type === 'coral') {
+    for (let i = 0; i < 4; i++) {
+      const coral = new THREE.Group();
+      const angle = i * Math.PI / 2;
+      coral.position.set(Math.cos(angle) * .95, 0, Math.sin(angle) * .95);
+      const material = coralMaterials[i % coralMaterials.length];
+      const height = .8 + i * .17;
+      branch(coral, [0, 0, 0], [0, height, 0], .085, material);
+      branch(coral, [0, height * .5, 0], [.4, height * .9, .2], .045, material);
+      branch(coral, [0, height * .55, 0], [-.3, height * 1.08, -.2], .043, material);
+      group.add(coral);
+    }
+  } else if (data.type === 'rock') {
+    for (let i = 0; i < 5; i++) {
+      const angle = i * Math.PI * .4;
+      const rock = new THREE.Mesh(rockGeo, rockMats[i % rockMats.length]);
+      rock.position.set(Math.cos(angle) * 1.05, .42, Math.sin(angle) * .95);
+      rock.scale.set(.7 + i * .09, .5 + i * .08, .7);
+      rock.rotation.y = angle; group.add(rock);
+    }
+  } else {
+    for (let i = 0; i < 8; i++) {
+      const angle = i * Math.PI / 4;
+      addPlant(data.at[0] + Math.cos(angle) * (1 + i % 2 * .35), data.at[2] + Math.sin(angle) * (1 + i % 2 * .35), 1.15 + i % 3 * .35, i);
+    }
+  }
+  return { data, index, group, halo, beacon, focus: new THREE.Vector3(data.at[0], data.at[1] + 2.13, data.at[2]), visited: false };
+});
+const aquariumAudio = createAquariumAudio(camera, habitatPoints.map(point => point.beacon));
+if (!aquariumAudio.supported) {
+  audioButton.disabled = true;
+  audioButton.title = 'Som indisponível neste navegador';
+}
+
 const particleCount = isTouch ? 170 : 300;
 const particlePositions = new Float32Array(particleCount * 3);
 const particleSpeeds = new Float32Array(particleCount);
@@ -454,6 +531,7 @@ let elapsed = 0;
 let foundTotal = 0;
 let lastFound = null;
 let nearest = null;
+let activePoi = null;
 let returnToJournal = false;
 const pressed = new Set();
 const stick = { x: 0, y: 0, pointer: null };
@@ -466,7 +544,7 @@ function start() {
   active = true;
   intro.classList.add('is-hidden');
   hud.hidden = false; playFooter.hidden = false; crosshair.hidden = false;
-  journalButton.hidden = false;
+  journalButton.hidden = false; audioButton.hidden = false;
   if (isTouch) mobileControls.hidden = false;
   else canvas.requestPointerLock?.();
 }
@@ -476,7 +554,7 @@ function look(dx, dy) {
   camera.rotation.set(pitch, yaw, 0);
 }
 function emitPulse() {
-  if (!active || speciesDialog.open || journalDialog.open || helpDialog.open) return;
+  if (!active || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open) return;
   pulseAge = 0;
   pulse.position.copy(camera.position);
   distanceLabel.textContent = 'Pulso emitido — siga os brilhos';
@@ -488,6 +566,24 @@ function toggleLantern() {
   document.querySelector('#lanternButton').setAttribute('aria-pressed', String(lanternOn));
   document.querySelector('#mobileLantern').setAttribute('aria-pressed', String(lanternOn));
   document.querySelector('#mobileLantern').setAttribute('aria-label', lanternOn ? 'Desligar lanterna' : 'Ligar lanterna');
+}
+function toggleAudio() {
+  if (!active || !aquariumAudio.supported) return;
+  const enabled = aquariumAudio.toggle();
+  audioButton.setAttribute('aria-pressed', String(enabled));
+  audioButton.setAttribute('aria-label', enabled ? 'Desativar som ambiente' : 'Ativar som ambiente');
+  audioButton.title = enabled ? 'Desativar som ambiente (M)' : 'Ativar som ambiente (M)';
+}
+function openPoi(point = activePoi) {
+  if (!active || !point || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open) return;
+  document.exitPointerLock?.();
+  point.visited = true;
+  document.querySelector('#poiKicker').textContent = point.data.kind;
+  document.querySelector('#poiTitle').textContent = point.data.title;
+  document.querySelector('#poiRegion').textContent = point.data.region;
+  document.querySelector('#poiDescription').textContent = point.data.description;
+  document.querySelector('#poiSource').href = point.data.source;
+  poiDialog.showModal();
 }
 function renderJournal() {
   journalEntries.innerHTML = fish.map(item => `<button class="journal-entry ${item.found ? 'is-found' : ''}" type="button" data-fish="${item.index}" ${item.found ? '' : 'disabled'}><span class="journal-entry-mark" style="--fish-color:${item.data.color}">${item.found ? '✳' : '○'}</span><span><strong>${item.found ? item.data.name : 'Espécie por encontrar'}</strong><small>${item.found ? item.data.scientific : 'Explore a redoma para revelar'}</small></span><span class="journal-entry-arrow">${item.found ? '↗' : '—'}</span></button>`).join('');
@@ -510,6 +606,7 @@ function openSpecies(item, justFound = false, fromJournal = false) {
   document.querySelector('#speciesPlace').textContent = item.data.place;
   document.querySelector('#speciesHabitat').textContent = item.data.habitat;
   document.querySelector('#speciesTrait').textContent = item.data.trait;
+  document.querySelector('#speciesBehavior').textContent = item.data.behavior;
   document.querySelector('#speciesSource').href = item.data.source;
   speciesDialog.showModal();
 }
@@ -534,6 +631,12 @@ document.querySelector('#pulseButton').addEventListener('click', emitPulse);
 document.querySelector('#mobilePulse').addEventListener('click', emitPulse);
 document.querySelector('#lanternButton').addEventListener('click', toggleLantern);
 document.querySelector('#mobileLantern').addEventListener('click', toggleLantern);
+audioButton.addEventListener('click', toggleAudio);
+document.querySelector('#inspectPoiButton').addEventListener('click', () => openPoi());
+document.querySelector('#closePoi').addEventListener('click', () => poiDialog.close());
+document.querySelector('#resumePoi').addEventListener('click', () => poiDialog.close());
+poiDialog.addEventListener('click', e => { if (e.target === poiDialog) poiDialog.close(); });
+poiDialog.addEventListener('close', () => { if (active && !isTouch) canvas.requestPointerLock?.(); });
 journalButton.addEventListener('click', openJournal);
 journalEntries.addEventListener('click', e => {
   const entry = e.target.closest('button[data-fish]');
@@ -572,7 +675,7 @@ function selectFish(clientX, clientY) {
   else distanceLabel.textContent = 'Aproxime-se deste peixe para registrá-lo';
 }
 canvas.addEventListener('click', e => {
-  if (!active || isTouch || speciesDialog.open || journalDialog.open || helpDialog.open) return;
+  if (!active || isTouch || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open) return;
   if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
   else selectFish(innerWidth / 2, innerHeight / 2);
 });
@@ -584,12 +687,14 @@ document.addEventListener('keydown', e => {
     if (journalDialog.open) journalDialog.close(); else openJournal();
     return;
   }
-  if (helpDialog.open || speciesDialog.open || journalDialog.open) return;
-  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e', 'f', 'l'].includes(key)) e.preventDefault();
+  if (helpDialog.open || speciesDialog.open || journalDialog.open || poiDialog.open) return;
+  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'control', 'e', 'f', 'l', 'm', 'r'].includes(key)) e.preventDefault();
   pressed.add(key);
   if (key === 'e' && !e.repeat) emitPulse();
   if (key === 'f' && !e.repeat && lastFound) openSpecies(lastFound);
   if (key === 'l' && !e.repeat) toggleLantern();
+  if (key === 'm' && !e.repeat) toggleAudio();
+  if (key === 'r' && !e.repeat) openPoi();
 });
 document.addEventListener('keyup', e => pressed.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => pressed.clear());
@@ -638,7 +743,7 @@ window.addEventListener('resize', () => {
 });
 
 function updatePlayer(dt) {
-  if (!active || helpDialog.open || speciesDialog.open || journalDialog.open) return;
+  if (!active || helpDialog.open || speciesDialog.open || journalDialog.open || poiDialog.open) return;
   const forward = (pressed.has('w') || pressed.has('arrowup') ? 1 : 0) - (pressed.has('s') || pressed.has('arrowdown') ? 1 : 0) - stick.y;
   const side = (pressed.has('d') || pressed.has('arrowright') ? 1 : 0) - (pressed.has('a') || pressed.has('arrowleft') ? 1 : 0) + stick.x;
   const up = (pressed.has(' ') || verticalButtons.up ? 1 : 0) - (pressed.has('control') || verticalButtons.down ? 1 : 0);
@@ -648,16 +753,60 @@ function updatePlayer(dt) {
   playerVelocity.lerp(targetVelocity, 1 - Math.exp(-dt * 4.6));
   camera.position.addScaledVector(playerVelocity, dt);
   camera.position.y = THREE.MathUtils.clamp(camera.position.y, -1.35, 6.25);
-  const normalizedHeight = (camera.position.y - domeBase) / domeHeightScale;
-  const maxRadius = Math.sqrt(Math.max(0, domeRadius ** 2 - normalizedHeight ** 2)) - .72;
+  const maxRadius = domeInteriorRadiusAt(camera.position.y);
   const radius = Math.hypot(camera.position.x, camera.position.z);
   if (radius > maxRadius) {
     camera.position.x *= maxRadius / radius;
     camera.position.z *= maxRadius / radius;
-    const normal = new THREE.Vector3(camera.position.x, 0, camera.position.z).normalize();
-    const outwardSpeed = playerVelocity.dot(normal);
-    if (outwardSpeed > 0) playerVelocity.addScaledVector(normal, -outwardSpeed);
+    pushDirection.set(camera.position.x, 0, camera.position.z).normalize();
+    const outwardSpeed = playerVelocity.dot(pushDirection);
+    if (outwardSpeed > 0) playerVelocity.addScaledVector(pushDirection, -outwardSpeed);
+    if (!touchingGlass && outwardSpeed > .35) {
+      const hitRadius = maxRadius + .72;
+      glassNormal.set(pushDirection.x * hitRadius, (camera.position.y - domeBase) / (domeHeightScale ** 2), pushDirection.z * hitRadius).normalize();
+      glassRipple.position.set(pushDirection.x * hitRadius, camera.position.y, pushDirection.z * hitRadius).addScaledVector(glassNormal, -.08);
+      glassRipple.quaternion.setFromUnitVectors(glassAxis, glassNormal);
+      glassRippleAge = 0;
+      glassNoticeAge = 0;
+      glassNotice.hidden = false;
+      if (isTouch) navigator.vibrate?.(18);
+    }
+    touchingGlass = true;
+  } else if (radius < maxRadius - .4) {
+    touchingGlass = false;
   }
+}
+function fishHome(item, distance, time, target, motion) {
+  target.copy(item.anchor);
+  const near = THREE.MathUtils.clamp((4.7 - distance) / 2.8, 0, 1);
+  const drift = motion;
+  switch (item.data.type) {
+    case 'sergeant':
+      target.x += Math.sin(time * .75) * .4 * drift;
+      target.z += Math.cos(time * .75) * .23 * drift;
+      target.y += Math.sin(time * 1.1) * .07 * drift;
+      break;
+    case 'butterfly':
+      target.x += Math.sin(time * .55 + item.phase) * .16 * drift - near * .55;
+      target.z -= near * .32;
+      target.y -= near * .2;
+      break;
+    case 'tang':
+      target.x += Math.sin(time * .36 + item.phase) * .58 * drift;
+      target.z += Math.cos(time * .36 + item.phase) * .36 * drift;
+      target.y -= (.11 + Math.sin(time * 1.25) * .08) * drift;
+      break;
+    case 'angelfish':
+      target.x += Math.sin(time * .3 + item.phase) * .23 * drift - near * .3;
+      target.y -= near * .68;
+      target.z += near * .2;
+      break;
+    default:
+      target.x += Math.sin(time * .6 + item.phase) * .52 * drift;
+      target.z += Math.cos(time * .6 + item.phase) * .3 * drift;
+      target.y += Math.sin(time * .9) * .06 * drift;
+  }
+  return target;
 }
 function animate(time) {
   const dt = Math.min((time - lastTime) / 1000, .1);
@@ -669,26 +818,41 @@ function animate(time) {
     plant.root.rotation.z = Math.sin(elapsed * .9 + plant.phase) * plant.amount * motion;
     plant.root.rotation.x = Math.cos(elapsed * .65 + plant.phase) * plant.amount * .4 * motion;
   }
+  for (const point of habitatPoints) {
+    point.beacon.rotation.y += dt * .28 * motion;
+    point.halo.scale.setScalar(1 + Math.sin(elapsed * 1.8 + point.index) * .08 * motion);
+  }
+  activePoi = null;
+  let poiDistance = 4.1;
+  for (const point of habitatPoints) {
+    const distance = camera.position.distanceTo(point.focus);
+    if (distance < poiDistance) { activePoi = point; poiDistance = distance; }
+  }
+  poiPrompt.hidden = !active || !activePoi || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open;
+  if (!poiPrompt.hidden) document.querySelector('#poiPromptTitle').textContent = activePoi.data.title;
   nearest = null;
   let nearestDistance = Infinity;
   for (const item of fish) {
     const distance = camera.position.distanceTo(item.group.position);
     if (!item.found && distance < nearestDistance) { nearest = item; nearestDistance = distance; }
-    if (active && !speciesDialog.open && !journalDialog.open && !helpDialog.open && distance < 2.2) discover(item);
+    if (active && !speciesDialog.open && !journalDialog.open && !helpDialog.open && !poiDialog.open && distance < 2.2) discover(item);
     // Each fish remains attached to a point by a damped spring. A swimmer passing
     // nearby pushes it away gently, then it settles back into its resting place.
-    const home = tmp.copy(item.anchor).sub(item.group.position);
+    const home = fishHome(item, distance, elapsed, tmp, motion).sub(item.group.position);
     item.velocity.addScaledVector(home, 4.8 * dt);
     item.velocity.addScaledVector(item.velocity, -Math.min(.99, 3.1 * dt));
     if (active && distance < 3.4 && distance > .01) {
-      const push = item.group.position.clone().sub(camera.position).normalize();
-      item.velocity.addScaledVector(push, (3.4 - distance) * .92 * dt);
+      pushDirection.copy(item.group.position).sub(camera.position).normalize();
+      const response = item.data.type === 'sergeant' ? .47 : item.data.type === 'angelfish' ? 1.15 : .9;
+      item.velocity.addScaledVector(pushDirection, (3.4 - distance) * response * dt);
     }
     item.group.position.addScaledVector(item.velocity, dt);
     item.group.position.y += Math.sin(elapsed * 1.1 + item.phase) * .0019 * motion;
     item.group.rotation.y = item.data.yaw + Math.sin(elapsed * .7 + item.phase) * .13 * motion + item.velocity.x * .09;
-    item.group.rotation.z = Math.sin(elapsed * 1.3 + item.phase) * .045 * motion;
-    item.tailPivot.rotation.y = Math.sin(elapsed * 4 + item.phase) * .23 * motion;
+    const grazing = item.data.type === 'tang' ? Math.max(0, Math.sin(elapsed * 1.25 + item.phase)) : 0;
+    item.group.rotation.z = Math.sin(elapsed * 1.3 + item.phase) * .045 * motion - grazing * .13 * motion;
+    const tailRate = item.data.type === 'butterfly' ? 5.2 : item.data.type === 'porkfish' ? 4.8 : 4;
+    item.tailPivot.rotation.y = Math.sin(elapsed * tailRate + item.phase) * (.2 + Math.min(1, item.velocity.length()) * .12) * motion;
     item.pectoralFins.forEach((fin, side) => { fin.rotation.y = (side ? 1 : -1) * (.28 + Math.sin(elapsed * 5 + item.phase) * .18 * motion); });
     item.aura.rotation.z = elapsed * .15 * motion;
     item.aura.material.opacity = pulseAge < 2.5 ? .22 * (1 - pulseAge / 2.5) : 0;
@@ -697,7 +861,7 @@ function animate(time) {
   if (active && foundTotal !== fish.length && nearest && pulseAge > 4) {
     distanceLabel.textContent = nearestDistance < 5 ? `Uma luz está a ${Math.ceil(nearestDistance)} m` : 'Explore a água';
   }
-  sonarReadout.hidden = !active || !nearest || pulseAge > 4 || speciesDialog.open || journalDialog.open || helpDialog.open;
+  sonarReadout.hidden = !active || !nearest || pulseAge > 4 || speciesDialog.open || journalDialog.open || helpDialog.open || poiDialog.open;
   if (!sonarReadout.hidden) {
     const dx = nearest.group.position.x - camera.position.x;
     const dz = nearest.group.position.z - camera.position.z;
@@ -712,6 +876,17 @@ function animate(time) {
   }
   particleGeometry.attributes.position.needsUpdate = true;
   pulseAge += dt;
+  glassRippleAge += dt;
+  glassNoticeAge += dt;
+  glassNotice.hidden = glassNoticeAge > 1.6;
+  if (glassRippleAge < 1.05) {
+    glassRipple.visible = true;
+    glassRipple.scale.setScalar(.22 + glassRippleAge * 1.9);
+    glassRipple.material.opacity = .62 * (1 - glassRippleAge / 1.05);
+  } else glassRipple.visible = false;
+  const glassGap = domeInteriorRadiusAt(camera.position.y) - Math.hypot(camera.position.x, camera.position.z);
+  const proximity = THREE.MathUtils.clamp(1 - glassGap / 2.1, 0, 1);
+  dome.material.uniforms.proximity.value = THREE.MathUtils.lerp(dome.material.uniforms.proximity.value, proximity, 1 - Math.exp(-dt * 4));
   if (pulseAge < 2.5) {
     pulse.visible = true;
     pulse.scale.setScalar(1 + pulseAge * 9.5);
@@ -729,5 +904,6 @@ window.addEventListener('beforeunload', () => {
   });
   glowMap.dispose();
   bodyTextures.forEach(texture => texture.dispose());
+  aquariumAudio.dispose();
   renderer.dispose();
 });

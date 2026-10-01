@@ -17,6 +17,7 @@
         <div class="top-note">Peixes da costa brasileira</div>
         <div class="top-actions">
           <button class="journal-button" id="journalButton" type="button" hidden>Diário <span id="journalCount">0 / 5</span></button>
+          <button class="sound-button audio-button" id="audioButton" type="button" aria-label="Ativar som ambiente" aria-pressed="false" title="Ativar som ambiente (M)" hidden>♪</button>
           <button class="sound-button" id="helpButton" type="button" aria-label="Abrir instruções">?</button>
         </div>
       </header>
@@ -40,6 +41,8 @@
         </aside>
 
         <div class="sonar-readout" id="sonarReadout" role="status" aria-live="polite" hidden><span id="sonarArrow" aria-hidden="true">↑</span><span id="sonarText"></span></div>
+        <div class="glass-notice" id="glassNotice" role="status" aria-live="polite" hidden>Você tocou o vidro da redoma</div>
+        <div class="poi-prompt" id="poiPrompt" hidden><span><small>Ponto de interesse</small><strong id="poiPromptTitle"></strong></span><button id="inspectPoiButton" type="button">Explorar habitat <kbd>R</kbd></button></div>
 
         <div class="crosshair" id="crosshair" aria-hidden="true" hidden><i></i><i></i><i></i><i></i></div>
         <dialog class="species-dialog" id="speciesDialog" aria-labelledby="speciesName">
@@ -52,6 +55,7 @@
             <div><dt>Onde encontrar</dt><dd id="speciesPlace"></dd></div>
             <div><dt>Habitat</dt><dd id="speciesHabitat"></dd></div>
             <div><dt>Como reconhecer</dt><dd id="speciesTrait"></dd></div>
+            <div><dt>Na redoma</dt><dd id="speciesBehavior"></dd></div>
           </dl>
           <a id="speciesSource" href="#" target="_blank" rel="noopener noreferrer">Consultar fonte da espécie ↗</a>
         </dialog>
@@ -65,8 +69,19 @@
           <button class="dialog-action" id="resumeJournal" type="button">Voltar à água</button>
         </dialog>
 
+        <dialog class="poi-dialog" id="poiDialog" aria-labelledby="poiTitle">
+          <button class="dialog-close" id="closePoi" aria-label="Fechar habitat" type="button">×</button>
+          <span class="discovery-kicker" id="poiKicker">Habitat brasileiro</span>
+          <h2 id="poiTitle"></h2>
+          <p class="poi-region" id="poiRegion"></p>
+          <p class="poi-description" id="poiDescription"></p>
+          <p class="poi-context">A redoma reúne habitats inspirados na costa brasileira; ela não representa um mapa geográfico.</p>
+          <a id="poiSource" href="#" target="_blank" rel="noopener noreferrer">Conhecer a fonte no ICMBio ↗</a>
+          <button class="dialog-action" id="resumePoi" type="button">Continuar explorando</button>
+        </dialog>
+
         <div class="play-footer" id="playFooter" hidden>
-          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span> &nbsp; G <span>diário</span></div>
+          <div class="movement-help">W A S D <span>mover</span> &nbsp; MOUSE <span>olhar</span> &nbsp; ESPAÇO / CTRL <span>subir / descer</span> &nbsp; R <span>habitat</span> &nbsp; M <span>som</span></div>
           <div class="footer-actions"><button class="pulse-button" id="lanternButton" type="button" aria-pressed="false">✦ Lanterna <kbd>L</kbd></button><button class="pulse-button" id="pulseButton" type="button"><span class="pulse-icon" aria-hidden="true"></span> Emitir pulso <kbd>E</kbd></button></div>
         </div>
 
@@ -80,8 +95,8 @@
           <span class="discovery-kicker">Guia da expedição</span>
           <h2 id="helpTitle">Siga as luzes.</h2>
           <p>Explore a redoma e encontre cinco espécies marinhas do Brasil. Depois, abra qualquer ficha pelo diário ou selecione o peixe na água.</p>
-          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço e Ctrl para mudar de altura, E para usar o sonar, L para ligar a lanterna e G para abrir o diário. Clique na água para capturar o mouse.</p>
-          <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita para olhar e toque nos botões para mudar de altura, acender a lanterna e emitir um pulso.</p>
+          <p><strong>Computador:</strong> W A S D para nadar, mouse para olhar, Espaço e Ctrl para mudar de altura, E para usar o sonar, L para ligar a lanterna, G para abrir o diário, R para conhecer um habitat próximo e M para alternar o som. Clique na água para capturar o mouse.</p>
+          <p><strong>Celular:</strong> use o controle à esquerda para nadar, arraste a metade direita para olhar e toque nos botões para mudar de altura, acender a lanterna e emitir um pulso. Toque em “Explorar habitat” perto de um marco luminoso.</p>
           <button class="dialog-action" id="resumeButton" type="button">Voltar à água</button>
         </dialog>
 

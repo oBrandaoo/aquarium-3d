@@ -26,9 +26,24 @@ try {
   await desktop.getByRole('button', { name: 'Voltar à água' }).click();
   await desktop.keyboard.press('l');
   assert.equal(await desktop.locator('#lanternButton').getAttribute('aria-pressed'), 'true');
+  await desktop.keyboard.press('m');
+  assert.equal(await desktop.locator('#audioButton').getAttribute('aria-pressed'), 'true');
   await desktop.keyboard.press('e');
   assert.match(await desktop.locator('#distanceLabel').innerText(), /Pulso emitido/);
   assert.match(await desktop.locator('#sonarReadout').innerText(), /Sinal a \d+ m/);
+  await desktop.keyboard.down('w');
+  try {
+    await desktop.locator('#poiPrompt').waitFor({ state: 'visible', timeout: 20000 });
+  } finally {
+    await desktop.keyboard.up('w');
+  }
+  await desktop.screenshot({ path: 'preview-habitat-marker.png' });
+  await desktop.keyboard.press('r');
+  assert.equal(await desktop.locator('#poiDialog').isVisible(), true);
+  assert.match(await desktop.locator('#poiTitle').innerText(), /Abrolhos/);
+  assert.match(await desktop.locator('#poiSource').getAttribute('href'), /icmbio/);
+  await desktop.screenshot({ path: 'preview-habitat.png' });
+  await desktop.getByRole('button', { name: 'Continuar explorando' }).click();
   await desktop.keyboard.down('w');
   try {
     await desktop.waitForFunction(() => Number(document.querySelector('#foundCount').textContent) >= 1, null, { timeout: 20000 });
@@ -39,6 +54,7 @@ try {
   assert.equal(await desktop.locator('#speciesDialog').isVisible(), true);
   assert.equal(await desktop.locator('#speciesScientific').innerText(), 'Abudefduf saxatilis');
   assert.match(await desktop.locator('#speciesPlace').innerText(), /Litoral brasileiro/);
+  assert.match(await desktop.locator('#speciesBehavior').innerText(), /Patrulha/);
   await desktop.screenshot({ path: 'preview-species.png' });
   await desktop.getByRole('button', { name: 'Fechar ficha' }).click();
   await desktop.keyboard.press('f');
@@ -55,6 +71,13 @@ try {
   assert.equal(await desktop.locator('#journalDialog').isVisible(), true);
   await desktop.getByRole('button', { name: 'Voltar à água' }).click();
   await desktop.screenshot({ path: 'preview-playing.png' });
+  await desktop.keyboard.down('s');
+  try {
+    await desktop.locator('#glassNotice').waitFor({ state: 'visible', timeout: 30000 });
+  } finally {
+    await desktop.keyboard.up('s');
+  }
+  await desktop.screenshot({ path: 'preview-glass.png' });
 
   const touch = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   touch.on('pageerror', error => errors.push(error.message));
@@ -65,12 +88,14 @@ try {
   assert.match(await touch.locator('#distanceLabel').innerText(), /Pulso emitido/);
   await touch.getByRole('button', { name: 'Ligar lanterna' }).click();
   assert.equal(await touch.locator('#mobileLantern').getAttribute('aria-pressed'), 'true');
+  await touch.getByRole('button', { name: 'Ativar som ambiente' }).click();
+  assert.equal(await touch.locator('#audioButton').getAttribute('aria-pressed'), 'true');
   await touch.locator('#journalButton').click();
   assert.equal(await touch.locator('#journalDialog').isVisible(), true);
   await touch.getByRole('button', { name: 'Voltar à água' }).click();
   await touch.screenshot({ path: 'preview-touch.png' });
   assert.deepEqual(errors, []);
-  console.log('Smoke test passed: dome rendering, sonar, swimming discovery, journal revisit, lantern and mobile controls.');
+  console.log('Smoke test passed: habitats, fish behavior cards, spatial audio toggle, glass contact, sonar, swimming discovery, journal and mobile controls.');
 } finally {
   await browser.close();
   await server.close();
